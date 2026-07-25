@@ -95,6 +95,11 @@
   background: var(--color-surface-hover);
 }
 
+.chevron,
+.chevronExpanded {
+  transition: transform 0.2s ease-in-out;
+}
+
 .chevron {
   transform: rotate(0deg);
 }
@@ -102,7 +107,7 @@
 /* Down arrow when collapsed (the default path orientation); rotating 90deg
    clockwise turns it into a left-pointing arrow when expanded. */
 .chevronExpanded {
-  transform: rotate(90deg);
+  transform: rotate(180deg);
 }
 
 .deleteButton {
