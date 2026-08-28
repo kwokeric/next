@@ -179,7 +179,24 @@ export function TaskRow({
             className={styles.addButton}
             aria-label="Add subtask"
           >
-            +
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                d="M4 3 V8 C4 9.1 4.9 10 6 10 H11"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M8.5 7.5 L12 10 L8.5 12.5"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </button>
 
           <button

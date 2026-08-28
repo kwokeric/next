@@ -22,7 +22,22 @@
   gap: 0.75rem;
 }
 
+.taskTitleGroup {
+  flex: 1;
+  min-width: 0;
+}
+
+.breadcrumb {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin-bottom: 0.125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .taskTitle {
+  display: block;
   font-size: 1.125rem;
   text-align: left;
 }

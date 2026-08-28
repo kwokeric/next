@@ -63,6 +63,22 @@ export function getTaskProgress(node: TaskNode): number {
   return total / node.subtasks.length;
 }
 
+// The chain of ancestor nodes from root down to (but not including) the
+// given task — empty for a root-level task. Gives the Next Action surface
+// a breadcrumb back to the bigger task a step belongs to.
+export function findAncestorPath(
+  nodes: TaskNode[],
+  targetId: string,
+  path: TaskNode[] = []
+): TaskNode[] | null {
+  for (const node of nodes) {
+    if (node.id === targetId) return path;
+    const found = findAncestorPath(node.subtasks, targetId, [...path, node]);
+    if (found) return found;
+  }
+  return null;
+}
+
 // Overall project completion: the average of each root task's completion
 // fraction. With 4 equally-weighted root tasks, finishing one is 25%;
 // getting a second root task's subtasks half-done contributes another

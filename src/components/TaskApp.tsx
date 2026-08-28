@@ -2,7 +2,14 @@
 
 import { useMemo, useRef, useState } from "react";
 import type { Task, Project } from "@prisma/client";
-import { buildTaskTree, findNextTask, getTaskProgress, type TaskNode } from "@/lib/task-tree";
+import {
+  buildTaskTree,
+  findAncestorPath,
+  findNextTask,
+  getProjectProgress,
+  getTaskProgress,
+  type TaskNode,
+} from "@/lib/task-tree";
 import { createTask, updateTask, deleteTask, breakdownTask } from "@/lib/api-client";
 import { NextActionCard } from "./NextActionCard";
 import { TaskRow } from "./TaskRow";
@@ -33,6 +40,11 @@ export function TaskApp({
 
   const tree = useMemo(() => buildTaskTree(tasks), [tasks]);
   const nextTask = useMemo(() => findNextTask(tree), [tree]);
+  const nextTaskAncestors = useMemo(
+    () => (nextTask ? findAncestorPath(tree, nextTask.id) ?? [] : []),
+    [tree, nextTask]
+  );
+  const projectProgress = useMemo(() => getProjectProgress(tree), [tree]);
 
   // Newly completed tasks stay in Active for a bit to allow time for the 
   // completion animation to complete. Tasks already complete on the first
@@ -157,6 +169,20 @@ export function TaskApp({
     <div className={styles.container}>
       <h1 className={styles.title}>Tasks</h1>
 
+      {tree.length > 0 && (
+        <>
+          <p className={styles.subtitle}>
+            {completedTasks.length} of {tree.length} tasks done
+          </p>
+          <div className={styles.progressTrack}>
+            <div
+              className={styles.progressFill}
+              style={{ width: `${Math.round(projectProgress * 100)}%` }}
+            />
+          </div>
+        </>
+      )}
+
       <h2 className={styles.sectionHeader}>Active</h2>
       <ul className={styles.taskList}>
         {activeTasks.map((task) => (
@@ -218,6 +244,7 @@ export function TaskApp({
         <div className={styles.nextStepBarInner}>
           <NextActionCard
             task={nextTask}
+            ancestors={nextTaskAncestors}
             onComplete={handleToggleStatus}
             onOpenAddSubtask={openAddTaskModal}
           />
