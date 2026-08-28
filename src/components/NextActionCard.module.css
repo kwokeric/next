@@ -30,7 +30,12 @@
 .breadcrumb {
   font-size: 0.75rem;
   color: var(--color-muted);
+  text-align: left;
   margin-bottom: 0.125rem;
+}
+
+.breadcrumbText {
+  display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

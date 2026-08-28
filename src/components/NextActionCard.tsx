@@ -22,7 +22,9 @@ export function NextActionCard({
           <div className={styles.taskTitleGroup}>
             {ancestors.length > 0 && (
               <p className={styles.breadcrumb}>
-                {ancestors.map((a) => a.title).join(" › ")} ›
+                <span className={styles.breadcrumbText}>
+                  {ancestors.map((a) => a.title).join(" > ")}{` >`}
+                </span>
               </p>
             )}
             <span className={styles.taskTitle}>{task.title}</span>

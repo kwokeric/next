@@ -39,7 +39,8 @@ export function TaskApp({
   );
 
   const tree = useMemo(() => buildTaskTree(tasks), [tasks]);
-  const nextTask = useMemo(() => findNextTask(tree), [tree]);
+  const nextTaskResult = useMemo(() => findNextTask(tree), [tree]);
+  const nextTask = nextTaskResult?.task ?? null;
   const nextTaskAncestors = useMemo(
     () => (nextTask ? findAncestorPath(tree, nextTask.id) ?? [] : []),
     [tree, nextTask]

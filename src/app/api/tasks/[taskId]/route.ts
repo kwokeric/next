@@ -77,6 +77,16 @@ export async function PATCH(
       ...(body.dueDate !== undefined
         ? { dueDate: body.dueDate ? new Date(body.dueDate) : null }
         : {}),
+      ...(body.dueTime !== undefined
+        ? { dueTime: body.dueTime ? new Date(body.dueTime) : null }
+        : {}),
+      ...(body.scheduledFor !== undefined
+        ? { scheduledFor: body.scheduledFor ? new Date(body.scheduledFor) : null }
+        : {}),
+      ...(body.timeOfDay ? { timeOfDay: body.timeOfDay } : {}),
+      ...(body.scheduledTime !== undefined
+        ? { scheduledTime: body.scheduledTime ? new Date(body.scheduledTime) : null }
+        : {}),
     },
   });
 

@@ -39,6 +39,15 @@ enum Priority {
   HIGH
 }
 
+// Coarse bucket for grouping a day's tasks in the schedule view. Independent
+// of `scheduledTime` — a task can have a bucket with no precise time at all.
+enum TimeOfDay {
+  ANYTIME
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
 model Task {
   id           String     @id @default(cuid())
   projectId    String
@@ -50,7 +59,18 @@ model Task {
   description  String?
   status       TaskStatus @default(TODO)
   priority     Priority   @default(MEDIUM)
-  dueDate      DateTime?
+  // Hard deadline: the day it's due, and (optionally) the exact time that
+  // day — the seam a future notifications feature hooks into.
+  dueDate      DateTime?  @db.Date
+  dueTime      DateTime?  @db.Time
+  // Soft plan: which day the user intends to work on it. Unset tasks are
+  // unscheduled and only ever surface via the natural (depth-first) next
+  // task search, never the scheduled one. A day that passes without the
+  // task being done isn't rewritten — see findNextTask's `today` handling,
+  // which treats any `scheduledFor <= today` as due today ("rolls over").
+  scheduledFor  DateTime?  @db.Date
+  timeOfDay     TimeOfDay  @default(ANYTIME)
+  scheduledTime DateTime?  @db.Time
   // Fractional-index sort key (see fractional-indexing package) — a plain
   // string so siblings can be reordered/inserted without renumbering rows.
   order        String

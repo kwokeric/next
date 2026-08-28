@@ -1,6 +1,8 @@
-import type { Task } from "@prisma/client";
+import type { Task, TimeOfDay } from "@prisma/client";
 
 export type TaskNode = Task & { subtasks: TaskNode[] };
+
+export type NextTaskResult = { task: TaskNode; reason: "scheduled" | "natural" };
 
 // Builds a nested tree from a flat, project-scoped task list. Assumes tasks
 // are already sorted by `order` (callers should query with
@@ -29,11 +31,12 @@ export function buildTaskTree(tasks: Task[]): TaskNode[] {
   return roots;
 }
 
-// The single smallest unfinished step: the first (in sibling order)
-// incomplete leaf task, found depth-first. If a task's subtasks are all
-// done/archived but the task itself isn't, the task itself is the next
-// action (there's nothing smaller left to surface).
-export function findNextTask(nodes: TaskNode[]): TaskNode | null {
+// The first (in sibling order) incomplete leaf task, found depth-first. If
+// a task's subtasks are all done/archived but the task itself isn't, the
+// task itself is the next action (there's nothing smaller left to surface).
+// This ignores scheduling entirely — see findNextTask for the surface
+// that combines this with scheduled tasks.
+function findNaturalNextTask(nodes: TaskNode[]): TaskNode | null {
   for (const node of nodes) {
     if (node.status === "DONE" || node.status === "ARCHIVED") continue;
 
@@ -41,13 +44,60 @@ export function findNextTask(nodes: TaskNode[]): TaskNode | null {
       return node;
     }
 
-    const childResult = findNextTask(node.subtasks);
+    const childResult = findNaturalNextTask(node.subtasks);
     if (childResult) return childResult;
 
     return node;
   }
 
   return null;
+}
+
+const TIME_OF_DAY_ORDER: Record<TimeOfDay, number> = {
+  MORNING: 0,
+  AFTERNOON: 1,
+  EVENING: 2,
+  ANYTIME: 3,
+};
+
+// Same calendar day regardless of time-of-day noise on either value —
+// avoids UTC/local boundary mismatches from comparing raw Date objects.
+function isOnOrBefore(date: Date, reference: Date): boolean {
+  const d = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  const r = Date.UTC(reference.getUTCFullYear(), reference.getUTCMonth(), reference.getUTCDate());
+  return d <= r;
+}
+
+// Any not-done task, at any depth, scheduled for today or earlier — a task
+// scheduled for a day that's since passed without being done just stays
+// eligible ("rolls over") rather than needing to be rewritten.
+function collectScheduledCandidates(nodes: TaskNode[], today: Date, out: TaskNode[] = []): TaskNode[] {
+  for (const node of nodes) {
+    if (node.status === "TODO" && node.scheduledFor && isOnOrBefore(node.scheduledFor, today)) {
+      out.push(node);
+    }
+    collectScheduledCandidates(node.subtasks, today, out);
+  }
+  return out;
+}
+
+// The task to surface as the single Next Action. A task explicitly
+// scheduled for today (or earlier — see collectScheduledCandidates) always
+// wins, earliest time-of-day first; otherwise falls back to the natural
+// depth-first search. The `reason` lets the UI show why a task is next.
+export function findNextTask(nodes: TaskNode[], today: Date = new Date()): NextTaskResult | null {
+  const scheduled = collectScheduledCandidates(nodes, today);
+  if (scheduled.length > 0) {
+    scheduled.sort((a, b) => {
+      const byTimeOfDay = TIME_OF_DAY_ORDER[a.timeOfDay] - TIME_OF_DAY_ORDER[b.timeOfDay];
+      if (byTimeOfDay !== 0) return byTimeOfDay;
+      return a.order < b.order ? -1 : a.order > b.order ? 1 : 0;
+    });
+    return { task: scheduled[0], reason: "scheduled" };
+  }
+
+  const natural = findNaturalNextTask(nodes);
+  return natural ? { task: natural, reason: "natural" } : null;
 }
 
 // A task's completion fraction (0-1). Leaf tasks are binary (done/archived
