@@ -13,20 +13,13 @@
 }
 
 .progress {
+  stroke: var(--color-ring);
   transition:
     stroke-dashoffset 0.3s ease,
     stroke 0.2s ease;
 }
 
-.progressActive {
-  stroke: var(--color-in-progress);
-}
-
-.progressComplete {
-  stroke: var(--color-complete);
-}
-
-/* Higher specificity than .progressActive/.progressComplete. */
+/* Higher specificity than .progress alone. */
 .isNextTask .progress {
   stroke: var(--color-next);
 }
@@ -50,13 +43,14 @@
   color: var(--color-fg);
 }
 
-.check {
-  position: absolute;
-  inset: 0;
+.filled {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--color-ring);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-complete);
   animation: checkPop 0.4s cubic-bezier(0.38, 0.31, 0.78, 1.52);
 }
 
@@ -70,7 +64,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .check {
+  .filled {
     animation: none;
   }
 }

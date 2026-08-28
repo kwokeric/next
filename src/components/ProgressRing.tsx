@@ -40,56 +40,60 @@ export function ProgressRing({
       role="img"
       aria-label={`${percent}% complete`}
     >
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={styles.svg}>
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          strokeWidth={strokeWidth}
-          fill="none"
-          className={styles.track}
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className={`${styles.progress} ${isComplete ? styles.progressComplete : styles.progressActive}`}
-        />
-      </svg>
       {isComplete ? (
-        <span className={styles.check} aria-hidden="true">
+        <div className={styles.filled} aria-hidden="true">
           <svg width={checkSize} height={checkSize} viewBox="0 0 16 16">
             <path
               d="M4 8.5 L7 11.5 L12 5"
-              stroke="currentColor"
+              stroke="#ffffff"
               strokeWidth="2"
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
           </svg>
-        </span>
-      ) : showDot ? (
-        <span
-          className={styles.dot}
-          style={{ width: dotSize, height: dotSize }}
-          aria-hidden="true"
-        />
+        </div>
       ) : (
-        showLabel && (
-          <span
-            className={styles.label}
-            style={{ fontSize: Math.max(8, size * 0.3) }}
-            aria-hidden="true"
-          >
-            {percent}%
-          </span>
-        )
+        <>
+          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={styles.svg}>
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              strokeWidth={strokeWidth}
+              fill="none"
+              className={styles.track}
+            />
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              strokeWidth={strokeWidth}
+              fill="none"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={offset}
+              className={styles.progress}
+            />
+          </svg>
+          {showDot ? (
+            <span
+              className={styles.dot}
+              style={{ width: dotSize, height: dotSize }}
+              aria-hidden="true"
+            />
+          ) : (
+            showLabel && (
+              <span
+                className={styles.label}
+                style={{ fontSize: Math.max(8, size * 0.3) }}
+                aria-hidden="true"
+              >
+                {percent}%
+              </span>
+            )
+          )}
+        </>
       )}
     </div>
   );

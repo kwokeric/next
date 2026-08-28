@@ -120,14 +120,6 @@ export function TaskRow({
         onClickCapture={handleRowClickCapture}
       >
 
-        <ProgressRing
-          handleToggleStatus={() => onToggleStatus(task)}
-          isNextTask={isNextTask}
-          progress={getTaskProgress(task)}
-          size={30}
-          showLabel={false}
-        />
-
         <span
           className={`${styles.title} ${isDone ? styles.titleDone : ""}`}
           onClick={() => setIsEditing(true)}
@@ -172,6 +164,14 @@ export function TaskRow({
             </svg>
           </button>
         )}
+
+        <ProgressRing
+          handleToggleStatus={() => onToggleStatus(task)}
+          isNextTask={isNextTask}
+          progress={getTaskProgress(task)}
+          size={30}
+          showLabel={false}
+        />
 
         <div className={`${styles.actions} ${swiped ? styles.actionsOpen : ""}`}>
           <button

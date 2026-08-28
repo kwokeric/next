@@ -28,6 +28,7 @@
   --color-complete: #b9dd79;
   --color-in-progress: #7fb8e0;
   --color-next: #f2a65a;
+  --color-ring: #a0d0ec;
 }
 
 @media (prefers-color-scheme: dark) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import type { Task, Project } from "@prisma/client";
+import type { Task, Project, TimeOfDay } from "@prisma/client";
 import {
   buildTaskTree,
   findAncestorPath,
@@ -16,10 +16,17 @@ import { TaskRow } from "./TaskRow";
 import { AddTaskModal } from "./AddTaskModal";
 import styles from "./TaskApp.module.css";
 
-// How long a task stays in Active after reaching 100% progress before it
-// moves to Completed — gives the checkmark animation a moment to register
-// instead of the row jumping sections the instant it completes.
+// How long a task stays in its section after reaching 100% progress before
+// it moves to Completed — gives the checkmark animation a moment to
+// register instead of the row jumping sections the instant it completes.
 const COMPLETION_MOVE_DELAY_MS = 500;
+
+const TIME_OF_DAY_SECTIONS: { key: TimeOfDay; label: string }[] = [
+  { key: "ANYTIME", label: "Anytime" },
+  { key: "MORNING", label: "Morning" },
+  { key: "AFTERNOON", label: "Afternoon" },
+  { key: "EVENING", label: "Evening" },
+];
 
 export function TaskApp({
   project,
@@ -32,11 +39,16 @@ export function TaskApp({
   const [breakingDownIds, setBreakingDownIds] = useState<Set<string>>(new Set());
 
   // One modal instance for the whole page, shared by every "+" (row, Next
-  // Step panel, and the floating add-task button). undefined = closed;
-  // null = open, adding a root task; a task id = open, adding its subtask.
+  // Step panel, section headers, and the floating add-task button).
+  // undefined = closed; null = open, adding a root task; a task id = open,
+  // adding its subtask.
   const [addTaskParentId, setAddTaskParentId] = useState<string | null | undefined>(
     undefined
   );
+  // Which bucket a root-level add lands in — set by whichever "+" opened
+  // the modal (a section header's or the general floating button's).
+  const [addTaskTimeOfDay, setAddTaskTimeOfDay] = useState<TimeOfDay>("ANYTIME");
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   const tree = useMemo(() => buildTaskTree(tasks), [tasks]);
   const nextTaskResult = useMemo(() => findNextTask(tree), [tree]);
@@ -47,8 +59,8 @@ export function TaskApp({
   );
   const projectProgress = useMemo(() => getProjectProgress(tree), [tree]);
 
-  // Newly completed tasks stay in Active for a bit to allow time for the 
-  // completion animation to complete. Tasks already complete on the first
+  // Newly completed tasks stay in their section for a bit to allow time for
+  // the completion animation to play. Tasks already complete on the first
   // render skip the delay entirely.
   const seenCompletedIds = useRef<Set<string>>(
     new Set(
@@ -59,7 +71,7 @@ export function TaskApp({
   );
   const [pendingCompletionIds, setPendingCompletionIds] = useState<Set<string>>(new Set());
 
-  const activeTasks = useMemo(
+  const activeOrPendingTasks = useMemo(
     () => tree.filter((task) => getTaskProgress(task) < 1 || pendingCompletionIds.has(task.id)),
     [tree, pendingCompletionIds]
   );
@@ -67,6 +79,15 @@ export function TaskApp({
     () => tree.filter((task) => getTaskProgress(task) >= 1 && !pendingCompletionIds.has(task.id)),
     [tree, pendingCompletionIds]
   );
+
+  function toggleSection(key: string) {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   function mergeTasks(prev: Task[], newTasks: Task[]): Task[] {
     const byId = new Map(prev.map((t) => [t.id, t]));
@@ -78,14 +99,16 @@ export function TaskApp({
     setTasks((prev) => mergeTasks(prev, newTasks));
   }
 
-  function openAddTaskModal(parentTaskId: string | null) {
+  function openAddTaskModal(parentTaskId: string | null, timeOfDay: TimeOfDay = "ANYTIME") {
     setAddTaskParentId(parentTaskId);
+    setAddTaskTimeOfDay(timeOfDay);
   }
 
   async function handleAddTask(title: string) {
     const task = await createTask(project.id, {
       title,
       parentTaskId: addTaskParentId ?? null,
+      timeOfDay: addTaskTimeOfDay,
     });
     upsertTasks([task]);
   }
@@ -166,9 +189,11 @@ export function TaskApp({
     setTasks((prev) => prev.filter((t) => !idsToRemove.has(t.id)));
   }
 
+  const dayName = new Date().toLocaleDateString(undefined, { weekday: "long" });
+
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Tasks</h1>
+      <h1 className={styles.title}>{dayName}</h1>
 
       {tree.length > 0 && (
         <>
@@ -184,22 +209,66 @@ export function TaskApp({
         </>
       )}
 
-      <h2 className={styles.sectionHeader}>Active</h2>
-      <ul className={styles.taskList}>
-        {activeTasks.map((task) => (
-          <TaskRow
-            key={task.id}
-            task={task}
-            depth={0}
-            isNextTask={task.id === nextTask?.id}
-            nextTaskId={nextTask?.id ?? null}
-            onToggleStatus={handleToggleStatus}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onOpenAddSubtask={openAddTaskModal}
-          />
-        ))}
-      </ul>
+      {TIME_OF_DAY_SECTIONS.map(({ key, label }) => {
+        const tasksInSection = activeOrPendingTasks.filter((task) => task.timeOfDay === key);
+        const isCollapsed = collapsedSections.has(key);
+        return (
+          <div key={key}>
+            <div className={styles.sectionHeaderRow}>
+              <button
+                className={styles.sectionHeaderButton}
+                onClick={() => toggleSection(key)}
+                aria-expanded={!isCollapsed}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 16 16"
+                  className={styles.sectionChevron}
+                  style={{ transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
+                >
+                  <path
+                    d="M4 6 L8 10 L12 6"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className={styles.sectionHeader}>
+                  {label} ({tasksInSection.length})
+                </span>
+              </button>
+              <button
+                className={styles.sectionAddButton}
+                onClick={() => openAddTaskModal(null, key)}
+                aria-label={`Add task to ${label}`}
+              >
+                +
+              </button>
+            </div>
+
+            {!isCollapsed && (
+              <ul className={styles.taskList}>
+                {tasksInSection.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    depth={0}
+                    isNextTask={task.id === nextTask?.id}
+                    nextTaskId={nextTask?.id ?? null}
+                    onToggleStatus={handleToggleStatus}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onOpenAddSubtask={openAddTaskModal}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })}
 
       <button
         onClick={() => openAddTaskModal(null)}
@@ -210,7 +279,34 @@ export function TaskApp({
 
       {completedTasks.length > 0 && (
         <>
-          <h2 className={styles.sectionHeader}>Completed</h2>
+          <div className={styles.sectionHeaderRow}>
+            <button
+              className={styles.sectionHeaderButton}
+              onClick={() => toggleSection("COMPLETED")}
+              aria-expanded={!collapsedSections.has("COMPLETED")}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                className={styles.sectionChevron}
+                style={{
+                  transform: collapsedSections.has("COMPLETED") ? "rotate(-90deg)" : "rotate(0deg)",
+                }}
+              >
+                <path
+                  d="M4 6 L8 10 L12 6"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className={styles.sectionHeader}>Completed ({completedTasks.length})</span>
+            </button>
+          </div>
+          {!collapsedSections.has("COMPLETED") && (
           <ul className={styles.taskList}>
             {completedTasks.map((task) => (
               <TaskRow
@@ -226,6 +322,7 @@ export function TaskApp({
               />
             ))}
           </ul>
+          )}
         </>
       )}
 

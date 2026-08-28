@@ -44,6 +44,7 @@ export async function POST(
       description: typeof body.description === "string" ? body.description : null,
       priority: body.priority ?? "MEDIUM",
       dueDate: body.dueDate ? new Date(body.dueDate) : null,
+      ...(body.timeOfDay ? { timeOfDay: body.timeOfDay } : {}),
       order: keyForAppend(lastSibling?.order ?? null),
     },
   });

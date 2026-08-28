@@ -1,4 +1,4 @@
-import { PrismaClient, TaskStatus } from "@prisma/client";
+import { PrismaClient, TaskStatus, TimeOfDay } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { generateKeyBetween } from "fractional-indexing";
 
@@ -29,13 +29,14 @@ async function main() {
   async function addTask(
     title: string,
     parentTaskId: string | null = null,
-    status: TaskStatus = TaskStatus.TODO
+    status: TaskStatus = TaskStatus.TODO,
+    timeOfDay: TimeOfDay = TimeOfDay.ANYTIME
   ) {
     const prevOrder = lastOrderByParent.get(parentTaskId) ?? null;
     const order = generateKeyBetween(prevOrder, null);
     lastOrderByParent.set(parentTaskId, order);
     return prisma.task.create({
-      data: { projectId: project.id, parentTaskId, title, order, status },
+      data: { projectId: project.id, parentTaskId, title, order, status, timeOfDay },
     });
   }
 
@@ -53,6 +54,13 @@ async function main() {
   await addTask("Book flights", japanTrip.id);
   await addTask("Reserve hotels", japanTrip.id);
   await addTask("Make itinerary", japanTrip.id);
+
+  // A few time-of-day examples to show off the schedule grouping.
+  await addTask("Morning routine", null, TaskStatus.TODO, TimeOfDay.MORNING);
+  await addTask("Bike to work", null, TaskStatus.TODO, TimeOfDay.MORNING);
+  await addTask("Lunch with Sam", null, TaskStatus.TODO, TimeOfDay.AFTERNOON);
+  await addTask("Evening walk", null, TaskStatus.TODO, TimeOfDay.EVENING);
+  await addTask("Read before bed", null, TaskStatus.TODO, TimeOfDay.EVENING);
 
   console.log(`Seeded project "${project.title}" for ${user.email}`);
 }

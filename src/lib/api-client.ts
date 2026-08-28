@@ -1,4 +1,4 @@
-import type { Task } from "@prisma/client";
+import type { Task, TimeOfDay } from "@prisma/client";
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
@@ -7,7 +7,7 @@ async function json<T>(res: Response): Promise<T> {
 
 export function createTask(
   projectId: string,
-  input: { title: string; parentTaskId?: string | null }
+  input: { title: string; parentTaskId?: string | null; timeOfDay?: TimeOfDay }
 ): Promise<Task> {
   return fetch(`/api/projects/${projectId}/tasks`, {
     method: "POST",
