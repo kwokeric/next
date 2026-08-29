@@ -21,11 +21,11 @@ import styles from "./TaskApp.module.css";
 // register instead of the row jumping sections the instant it completes.
 const COMPLETION_MOVE_DELAY_MS = 500;
 
-const TIME_OF_DAY_SECTIONS: { key: TimeOfDay; label: string }[] = [
-  { key: "ANYTIME", label: "Anytime" },
-  { key: "MORNING", label: "Morning" },
-  { key: "AFTERNOON", label: "Afternoon" },
-  { key: "EVENING", label: "Evening" },
+const TIME_OF_DAY_SECTIONS: { key: TimeOfDay; label: string; emoji: string }[] = [
+  { key: "ANYTIME", label: "Anytime", emoji: "🕐" },
+  { key: "MORNING", label: "Morning", emoji: "🌅" },
+  { key: "AFTERNOON", label: "Afternoon", emoji: "☀️" },
+  { key: "EVENING", label: "Evening", emoji: "🌙" },
 ];
 
 export function TaskApp({
@@ -209,7 +209,7 @@ export function TaskApp({
         </>
       )}
 
-      {TIME_OF_DAY_SECTIONS.map(({ key, label }) => {
+      {TIME_OF_DAY_SECTIONS.map(({ key, label, emoji }) => {
         const tasksInSection = activeOrPendingTasks.filter((task) => task.timeOfDay === key);
         const isCollapsed = collapsedSections.has(key);
         return (
@@ -220,6 +220,12 @@ export function TaskApp({
                 onClick={() => toggleSection(key)}
                 aria-expanded={!isCollapsed}
               >
+                <span className={styles.sectionEmoji} aria-hidden="true">
+                  {emoji}
+                </span>
+                <span className={styles.sectionHeader}>
+                  {label} ({tasksInSection.length})
+                </span>
                 <svg
                   width="14"
                   height="14"
@@ -236,9 +242,6 @@ export function TaskApp({
                     strokeLinejoin="round"
                   />
                 </svg>
-                <span className={styles.sectionHeader}>
-                  {label} ({tasksInSection.length})
-                </span>
               </button>
               <button
                 className={styles.sectionAddButton}

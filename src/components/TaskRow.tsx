@@ -134,14 +134,13 @@ export function TaskRow({
         </span>
 
 
-        {hasSubtasks && (
+        {hasSubtasks && (depth > 0 || !expanded) && (
           <span className={styles.count}>
             {completedCount}/{task.subtasks.length}
           </span>
         )}
 
-
-        {hasSubtasks && (
+        {hasSubtasks && (depth > 0 || !expanded) && (
           <button
             className={styles.toggleButton}
             aria-label={expanded ? "Collapse" : "Expand"}
@@ -169,7 +168,7 @@ export function TaskRow({
           handleToggleStatus={() => onToggleStatus(task)}
           isNextTask={isNextTask}
           progress={getTaskProgress(task)}
-          size={30}
+          size={24}
           showLabel={false}
         />
 
@@ -225,6 +224,35 @@ export function TaskRow({
             />
           ))}
         </ul>
+      )}
+
+      {hasSubtasks && depth === 0 && expanded && (
+        <div className={styles.cardFooter}>
+          <span className={styles.count}>
+            {completedCount}/{task.subtasks.length}
+          </span>
+          <button
+            className={styles.toggleButton}
+            aria-label={expanded ? "Collapse" : "Expand"}
+            onClick={() => setExpanded((v) => !v)}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              className={expanded ? styles.chevronExpanded : styles.chevron}
+            >
+              <path
+                d="M4 6 L8 10 L12 6"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
       )}
     </li>
   );

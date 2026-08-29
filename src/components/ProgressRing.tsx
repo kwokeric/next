@@ -1,6 +1,6 @@
 import styles from "./ProgressRing.module.css";
 
-const DEFAULT_SIZE = 40;
+const DEFAULT_SIZE = 32;
 
 // `progress` is a 0-1 fraction (see getTaskProgress / getProjectProgress in
 // lib/task-tree). `size` lets callers shrink the ring for compact contexts
@@ -18,7 +18,7 @@ export function ProgressRing({
   size?: number;
   showLabel?: boolean;
 }) {
-  const strokeWidth = Math.max(2, Math.round(size / 8));
+  const strokeWidth = Math.max(2, Math.round(size / 12));
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
