@@ -1,9 +1,63 @@
 .card {
-  border: 1px solid var(--color-border-subtle);
+  position: relative;
   border-radius: 0.75rem;
   background: var(--color-bg);
   padding: 1.5rem;
   text-align: center;
+}
+
+/* A rotating conic gradient, masked down to just the padding-box ring —
+   the classic animated-gradient-border trick. The mask XORs a filled
+   content-box against a filled border-box, leaving only the band between
+   them (the "border") opaque. */
+.animatedBorder {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  padding: 2px;
+  box-sizing: border-box;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}
+
+.animatedBorder::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  aspect-ratio: 1;
+  background: conic-gradient(
+    from 0deg,
+    var(--blue-300),
+    var(--green-300),
+    var(--blue-300),
+    var(--blue-300),
+    var(--green-300),
+    var(--blue-300)
+  );
+  animation: borderSpin 3s linear infinite;
+  will-change: transform;
+}
+
+@keyframes borderSpin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animatedBorder::before {
+    animation: none;
+  }
 }
 
 .label {

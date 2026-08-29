@@ -34,6 +34,58 @@
   color: var(--color-fg);
 }
 
+/* Same rotating-conic-gradient-border trick as NextActionCard's
+   .animatedBorder — replaces the plain SVG ring entirely for a next task
+   (not just an outline around it). Sized flush with the wrapper (inset: 0)
+   and padding set inline to strokeWidth, so it occupies exactly the band a
+   static ring's stroke would. */
+.ringAnimatedBorder {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  box-sizing: border-box;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}
+
+.ringAnimatedBorder::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  aspect-ratio: 1;
+  background: conic-gradient(
+    from 0deg,
+    var(--blue-300),
+    var(--green-300),
+    var(--blue-300),
+    var(--green-300)
+  );
+  animation: borderSpin 3s linear infinite;
+  will-change: transform;
+}
+
+@keyframes borderSpin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ringAnimatedBorder::before {
+    animation: none;
+  }
+}
+
 .filled {
   width: 100%;
   height: 100%;

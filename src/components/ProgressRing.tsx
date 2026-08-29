@@ -29,14 +29,13 @@ export function ProgressRing({
   const offset = circumference * (1 - clamped);
   const isComplete = clamped >= 1;
   const checkSize = size * 0.75;
-  // Nothing to show progress-wise yet, but it's the one to start — the
-  // ring's track and a left-arrow inside it share one green band that
-  // wipes across both and parks off-screen, like a now-playing pulse.
+  // Nothing to show progress-wise yet, but it's the one to start — a
+  // left-arrow (inside the animated border) gets a green band that wipes
+  // across it and parks off-screen, like a now-playing pulse.
   const showNextPlay = isNextTask && clamped <= 0;
 
-  // Ring and arrow share this 0-`size` viewBox (matching the icon's
-  // rendered pixel size 1:1, no extra scaling), so a "24px-wide green
-  // band" can be expressed exactly and both elements stay in sync.
+  // The arrow's own viewBox matches the icon's rendered pixel size 1:1 (no
+  // extra scaling), so a "24px-wide green band" can be expressed exactly.
   const greenBandPx = 24;
   const greenHalfPercent = Math.min(45, (greenBandPx / 2 / size) * 100);
   const arrowSpan = size * 0.55;
@@ -80,78 +79,81 @@ export function ProgressRing({
             />
           </svg>
         </div>
-      ) : showNextPlay ? (
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-          {reducedMotion ? (
-            <>
-              <circle
-                cx={size / 2}
-                cy={size / 2}
-                r={radius}
-                strokeWidth={strokeWidth}
-                fill="none"
-                stroke="var(--green-300)"
-              />
-              <path
-                d={arrowPath}
-                fill="none"
-                stroke="var(--green-300)"
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </>
-          ) : (
-            <>
-              <defs>
-                <linearGradient
-                  id={gradientId}
-                  x1={0}
-                  y1={size / 2}
-                  x2={size}
-                  y2={size / 2}
-                  gradientUnits="userSpaceOnUse"
-                >
-                  <stop offset="0%" style={{ stopColor: "var(--color-border-subtle)" }} />
-                  <stop
-                    offset={`${50 - greenHalfPercent}%`}
-                    style={{ stopColor: "var(--color-border-subtle)" }}
+      ) : isNextTask ? (
+        <>
+          {/* Replaces the plain ring entirely (not just an outline around
+              it) — padding matches the normal ring's own strokeWidth so
+              the animated band lines up with where a static ring would sit. */}
+          <span
+            className={styles.ringAnimatedBorder}
+            style={{ padding: strokeWidth }}
+            aria-hidden="true"
+          />
+          {showNextPlay && (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+              {reducedMotion ? (
+                <path
+                  d={arrowPath}
+                  fill="none"
+                  stroke="var(--green-300)"
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              ) : (
+                <>
+                  <defs>
+                    <linearGradient
+                      id={gradientId}
+                      x1={0}
+                      y1={size / 2}
+                      x2={size}
+                      y2={size / 2}
+                      gradientUnits="userSpaceOnUse"
+                    >
+                      <stop offset="0%" style={{ stopColor: "var(--color-border-subtle)" }} />
+                      <stop
+                        offset={`${50 - greenHalfPercent}%`}
+                        style={{ stopColor: "var(--color-border-subtle)" }}
+                      />
+                      <stop offset="50%" style={{ stopColor: "var(--green-300)" }} />
+                      <stop
+                        offset={`${50 + greenHalfPercent}%`}
+                        style={{ stopColor: "var(--color-border-subtle)" }}
+                      />
+                      <stop offset="100%" style={{ stopColor: "var(--color-border-subtle)" }} />
+                      <animateTransform
+                        attributeName="gradientTransform"
+                        type="translate"
+                        values={`-${size} 0; -${size} 0; ${size} 0; ${size} 0`}
+                        keyTimes="0; 0.35; 0.65; 1"
+                        dur="3.6s"
+                        repeatCount="indefinite"
+                      />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d={arrowPath}
+                    fill="none"
+                    stroke={`url(#${gradientId})`}
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
-                  <stop offset="50%" style={{ stopColor: "var(--green-300)" }} />
-                  <stop
-                    offset={`${50 + greenHalfPercent}%`}
-                    style={{ stopColor: "var(--color-border-subtle)" }}
-                  />
-                  <stop offset="100%" style={{ stopColor: "var(--color-border-subtle)" }} />
-                  <animateTransform
-                    attributeName="gradientTransform"
-                    type="translate"
-                    values={`-${size} 0; -${size} 0; ${size} 0; ${size} 0`}
-                    keyTimes="0; 0.35; 0.65; 1"
-                    dur="3.6s"
-                    repeatCount="indefinite"
-                  />
-                </linearGradient>
-              </defs>
-              <circle
-                cx={size / 2}
-                cy={size / 2}
-                r={radius}
-                strokeWidth={strokeWidth}
-                fill="none"
-                stroke={`url(#${gradientId})`}
-              />
-              <path
-                d={arrowPath}
-                fill="none"
-                stroke={`url(#${gradientId})`}
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </>
+                </>
+              )}
+            </svg>
           )}
-        </svg>
+          {showLabel && !showNextPlay && (
+            <span
+              className={styles.label}
+              style={{ fontSize: Math.max(8, size * 0.3) }}
+              aria-hidden="true"
+            >
+              {percent}%
+            </span>
+          )}
+        </>
       ) : (
         <>
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={styles.svg}>

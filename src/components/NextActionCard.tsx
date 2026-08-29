@@ -16,6 +16,7 @@ export function NextActionCard({
 }) {
   return (
     <div className={styles.card}>
+      <span className={styles.animatedBorder} aria-hidden="true" />
       <p className={styles.label}>Next step</p>
       {task ? (
         <div className={styles.taskRow}>
