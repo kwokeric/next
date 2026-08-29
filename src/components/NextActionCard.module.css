@@ -70,7 +70,7 @@
 
 .checkButton {
   border: none;
-  background: var(--color-complete);
+  background: var(--color-ring);
   color: #ffffff;
 }
 
