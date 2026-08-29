@@ -16,7 +16,6 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  border-radius: 0.375rem;
   padding: 0.25rem 0.5rem;
   /* Swipe-to-reveal reads raw pointer coordinates — these stop a
      click-drag from being hijacked into a native text-selection/drag
@@ -54,13 +53,21 @@
   min-width: 0;
 }
 
-.count {
+.countPill {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  padding: 0.1875rem 0.5rem;
+  background: none;
+  color: var(--color-muted-fg);
   font-size: 0.75rem;
-  color: var(--color-muted);
+  cursor: pointer;
 }
 
 .addButton,
-.toggleButton,
 .deleteButton {
   flex-shrink: 0;
   width: 2rem;
@@ -83,15 +90,6 @@
 
 .addButton:hover,
 .addButton:active {
-  background: var(--color-surface-hover);
-}
-
-.toggleButton {
-  color: var(--color-muted-fg);
-}
-
-.toggleButton:hover,
-.toggleButton:active {
   background: var(--color-surface-hover);
 }
 
@@ -133,12 +131,4 @@
 .actionsOpen {
   width: 4.5rem;
   margin-left: 0;
-}
-
-.cardFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0 0.5rem;
 }
