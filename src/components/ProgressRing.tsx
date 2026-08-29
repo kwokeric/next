@@ -90,12 +90,12 @@ export function ProgressRing({
                 r={radius}
                 strokeWidth={strokeWidth}
                 fill="none"
-                stroke="var(--color-complete)"
+                stroke="var(--green-300)"
               />
               <path
                 d={arrowPath}
                 fill="none"
-                stroke="var(--color-complete)"
+                stroke="var(--green-300)"
                 strokeWidth={strokeWidth}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -117,7 +117,7 @@ export function ProgressRing({
                     offset={`${50 - greenHalfPercent}%`}
                     style={{ stopColor: "var(--color-border-subtle)" }}
                   />
-                  <stop offset="50%" style={{ stopColor: "var(--color-complete)" }} />
+                  <stop offset="50%" style={{ stopColor: "var(--green-300)" }} />
                   <stop
                     offset={`${50 + greenHalfPercent}%`}
                     style={{ stopColor: "var(--color-border-subtle)" }}

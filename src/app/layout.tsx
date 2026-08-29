@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const inter = localFont({
+  src: [
+    { path: "./fonts/Inter-4.1/InterVariable.ttf", style: "normal" },
+    { path: "./fonts/Inter-4.1/InterVariable-Italic.ttf", style: "italic" },
+  ],
+  variable: "--font-inter",
 });
 
 const belgianoSerif = localFont({
@@ -29,10 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${belgianoSerif.variable}`}
-    >
+    <html lang="en" className={`${inter.variable} ${belgianoSerif.variable}`}>
       <body>{children}</body>
     </html>
   );

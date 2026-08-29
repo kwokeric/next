@@ -13,7 +13,7 @@
 }
 
 .progress {
-  stroke: var(--color-ring);
+  stroke: var(--blue-300);
   transition:
     stroke-dashoffset 0.3s ease,
     stroke 0.2s ease;
@@ -21,7 +21,7 @@
 
 /* Higher specificity than .progress alone. */
 .isNextTask .progress {
-  stroke: var(--color-next);
+  stroke: var(--orange-400);
 }
 
 .label {
@@ -38,7 +38,7 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: var(--color-ring);
+  background: var(--blue-300);
   display: flex;
   align-items: center;
   justify-content: center;

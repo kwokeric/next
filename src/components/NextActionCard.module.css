@@ -70,13 +70,13 @@
 
 .checkButton {
   border: none;
-  background: var(--color-ring);
+  background: var(--blue-300);
   color: #ffffff;
 }
 
 .checkButton:hover,
 .checkButton:active {
-  background: var(--color-highlight-border);
+  background: var(--green-600);
 }
 
 .plusButton {

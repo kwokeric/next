@@ -40,7 +40,7 @@
 
 .addButton {
   border: none;
-  background: var(--color-in-progress);
+  background: var(--blue-400);
   color: var(--btn-primary-fg);
 }
 

@@ -25,13 +25,6 @@
   touch-action: pan-y;
 }
 
-.checkbox {
-  width: 1.125rem;
-  height: 1.125rem;
-  accent-color: var(--btn-primary-bg);
-  flex-shrink: 0;
-}
-
 .title {
   display: flex;
   align-items: center;
@@ -85,7 +78,7 @@
 }
 
 .addButton {
-  color: var(--color-in-progress);
+  color: var(--blue-400);
 }
 
 .addButton:hover,
