@@ -49,6 +49,9 @@ export function TaskApp({
   // the modal (a section header's or the general floating button's).
   const [addTaskTimeOfDay, setAddTaskTimeOfDay] = useState<TimeOfDay>("ANYTIME");
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  // Which row's swipe-to-reveal actions are open — lifted here so opening
+  // one row's actions closes any other row's, across every section.
+  const [openRowId, setOpenRowId] = useState<string | null>(null);
 
   const tree = useMemo(() => buildTaskTree(tasks), [tasks]);
   const nextTaskResult = useMemo(() => findNextTask(tree), [tree]);
@@ -261,6 +264,8 @@ export function TaskApp({
                     depth={0}
                     isNextTask={task.id === nextTask?.id}
                     nextTaskId={nextTask?.id ?? null}
+                    openRowId={openRowId}
+                    onRowOpenChange={setOpenRowId}
                     onToggleStatus={handleToggleStatus}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
@@ -310,6 +315,8 @@ export function TaskApp({
                 depth={0}
                 isNextTask={task.id === nextTask?.id}
                 nextTaskId={nextTask?.id ?? null}
+                openRowId={openRowId}
+                onRowOpenChange={setOpenRowId}
                 onToggleStatus={handleToggleStatus}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
