@@ -264,7 +264,6 @@ export function TaskApp({
                     onToggleStatus={handleToggleStatus}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
-                    onOpenAddSubtask={openAddTaskModal}
                   />
                 ))}
               </ul>
@@ -314,7 +313,6 @@ export function TaskApp({
                 onToggleStatus={handleToggleStatus}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
-                onOpenAddSubtask={openAddTaskModal}
               />
             ))}
           </ul>

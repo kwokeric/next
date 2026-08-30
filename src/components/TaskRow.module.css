@@ -25,6 +25,20 @@
   touch-action: pan-y;
 }
 
+/* Matches the edit/delete buttons' 2rem touch target so the progress
+   ring's icon (24px, no built-in padding) sits at the same inset as
+   the icons inside those buttons — otherwise the row gap alone leaves
+   the ring visually closer to its neighbor than the buttons are to
+   each other. */
+.ringSlot {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .title {
   display: flex;
   align-items: center;
@@ -60,11 +74,12 @@
   cursor: pointer;
 }
 
-.addButton,
+.editButton,
 .deleteButton {
   flex-shrink: 0;
   width: 2rem;
   height: 2rem;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -77,13 +92,17 @@
   font-weight: bold;
 }
 
-.addButton {
-  color: var(--blue-400);
+.editButton {
+  color: var(--color-muted);
 }
 
-.addButton:hover,
-.addButton:active {
-  background: var(--color-surface-hover);
+.editButton:hover,
+.editButton:active {
+  background: var(--color-border-subtle);
+}
+
+.deleteButton {
+  color: var(--color-muted);
 }
 
 .chevron,
@@ -99,11 +118,6 @@
    clockwise turns it into a left-pointing arrow when expanded. */
 .chevronExpanded {
   transform: rotate(180deg);
-}
-
-.deleteButton {
-  font-size: 1.5rem;
-  color: var(--color-danger-fg);
 }
 
 /* Clipped to zero width at rest; swiping open grows it to fit both

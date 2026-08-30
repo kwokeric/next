@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getTaskProgress, type TaskNode } from "@/lib/task-tree";
 import { ProgressRing } from "./ProgressRing";
+import { EditIcon } from "./icons/EditIcon";
+import { DeleteIcon } from "./icons/DeleteIcon";
 import styles from "./TaskRow.module.css";
 
 const SWIPE_THRESHOLD_PX = 80; // 5rem at the default 16px root
@@ -15,7 +17,6 @@ export function TaskRow({
   onToggleStatus,
   onEdit,
   onDelete,
-  onOpenAddSubtask,
 }: {
   task: TaskNode;
   depth: number;
@@ -27,7 +28,6 @@ export function TaskRow({
   onToggleStatus: (task: TaskNode) => void;
   onEdit: (task: TaskNode, title: string) => void;
   onDelete: (task: TaskNode) => void;
-  onOpenAddSubtask: (taskId: string) => void;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -72,9 +72,10 @@ export function TaskRow({
     }
   }
 
-  const onAddSubtask = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const onEditClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    onOpenAddSubtask(task.id)
+    setIsEditing(true);
+    inputRef.current?.focus();
   }
 
   // Swipe left past the threshold reveals the add/delete buttons; swipe
@@ -160,38 +161,23 @@ export function TaskRow({
           </button>
         )}
 
-        <ProgressRing
-          handleToggleStatus={() => onToggleStatus(task)}
-          isNextTask={isNextTask}
-          progress={getTaskProgress(task)}
-          size={24}
-          showLabel={false}
-        />
+        <span className={styles.ringSlot}>
+          <ProgressRing
+            handleToggleStatus={() => onToggleStatus(task)}
+            isNextTask={isNextTask}
+            progress={getTaskProgress(task)}
+            size={24}
+            showLabel={false}
+          />
+        </span>
 
         <div className={`${styles.actions} ${swiped ? styles.actionsOpen : ""}`}>
           <button
-            onClick={onAddSubtask}
-            className={styles.addButton}
-            aria-label="Add subtask"
+            onClick={onEditClick}
+            className={styles.editButton}
+            aria-label="Edit task"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-              <path
-                d="M4 3 V8 C4 9.1 4.9 10 6 10 H11"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M8.5 7.5 L12 10 L8.5 12.5"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <EditIcon size={22} />
           </button>
 
           <button
@@ -199,7 +185,7 @@ export function TaskRow({
             className={styles.deleteButton}
             aria-label="Delete task"
           >
-            ×
+            <DeleteIcon size={16} />
           </button>
         </div>
       </div>
@@ -216,7 +202,6 @@ export function TaskRow({
               onToggleStatus={onToggleStatus}
               onDelete={onDelete}
               onEdit={onEdit}
-              onOpenAddSubtask={onOpenAddSubtask}
             />
           ))}
         </ul>
