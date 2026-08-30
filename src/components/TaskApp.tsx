@@ -198,7 +198,7 @@ export function TaskApp({
       {tree.length > 0 && (
         <>
           <p className={styles.subtitle}>
-            {completedTasks.length} of {tree.length} tasks done
+            {completedTasks.length} of {tree.length} tasks completed
           </p>
           <div className={styles.progressTrack}>
             <div
@@ -216,7 +216,7 @@ export function TaskApp({
           <div key={key}>
             <div className={styles.sectionHeaderRow}>
               <button
-                className={styles.sectionHeaderButton}
+                className={`${styles.sectionHeaderButton} ${styles[key.toLowerCase()]}`}
                 onClick={() => toggleSection(key)}
                 aria-expanded={!isCollapsed}
               >
@@ -272,13 +272,6 @@ export function TaskApp({
           </div>
         );
       })}
-
-      <button
-        onClick={() => openAddTaskModal(null)}
-        className={styles.addTaskButton}
-      >
-        + Add task
-      </button>
 
       {completedTasks.length > 0 && (
         <>
