@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { TaskNode } from "@/lib/task-tree";
 import styles from "./NextActionCard.module.css";
 
@@ -7,12 +8,10 @@ export function NextActionCard({
   task,
   ancestors,
   onComplete,
-  onOpenAddSubtask,
 }: {
   task: TaskNode | null;
   ancestors: TaskNode[];
   onComplete: (task: TaskNode) => void;
-  onOpenAddSubtask: (taskId: string) => void;
 }) {
   return (
     <div className={styles.card}>
@@ -31,8 +30,8 @@ export function NextActionCard({
             <span className={styles.taskTitle}>{task.title}</span>
           </div>
           <div className={styles.actions}>
-            <button
-              onClick={() => onOpenAddSubtask(task.id)}
+            <Link
+              href={`/tasks/new?parent=${task.id}`}
               className={styles.plusButton}
               aria-label="Add subtask"
             >
@@ -54,7 +53,7 @@ export function NextActionCard({
                   strokeLinejoin="round"
                 />
               </svg>
-            </button>
+            </Link>
             <button
               onClick={() => onComplete(task)}
               className={styles.checkButton}

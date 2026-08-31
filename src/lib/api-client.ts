@@ -7,7 +7,13 @@ async function json<T>(res: Response): Promise<T> {
 
 export function createTask(
   projectId: string,
-  input: { title: string; parentTaskId?: string | null; timeOfDay?: TimeOfDay }
+  input: {
+    title: string;
+    parentTaskId?: string | null;
+    timeOfDay?: TimeOfDay;
+    scheduledFor?: string | null;
+    scheduledTime?: string | null;
+  }
 ): Promise<Task> {
   return fetch(`/api/projects/${projectId}/tasks`, {
     method: "POST",
@@ -20,7 +26,12 @@ export function createTask(
 // ancestors auto-completed (or un-completed) by the status cascade.
 export function updateTask(
   taskId: string,
-  input: Partial<Pick<Task, "title" | "description" | "status" | "priority">>
+  input: Partial<
+    Pick<Task, "title" | "description" | "status" | "priority" | "timeOfDay"> & {
+      scheduledFor: string | null;
+      scheduledTime: string | null;
+    }
+  >
 ): Promise<Task[]> {
   return fetch(`/api/tasks/${taskId}`, {
     method: "PATCH",

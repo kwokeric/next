@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import type { Task, Project, TimeOfDay } from "@prisma/client";
+import Link from "next/link";
+import type { Task, TimeOfDay } from "@prisma/client";
 import {
   buildTaskTree,
   findAncestorPath,
@@ -10,10 +11,9 @@ import {
   getTaskProgress,
   type TaskNode,
 } from "@/lib/task-tree";
-import { createTask, updateTask, deleteTask, breakdownTask } from "@/lib/api-client";
+import { updateTask, deleteTask } from "@/lib/api-client";
 import { NextActionCard } from "./NextActionCard";
 import { TaskRow } from "./TaskRow";
-import { AddTaskModal } from "./AddTaskModal";
 import styles from "./TaskApp.module.css";
 
 // How long a task stays in its section after reaching 100% progress before
@@ -28,26 +28,8 @@ const TIME_OF_DAY_SECTIONS: { key: TimeOfDay; label: string; emoji: string }[] =
   { key: "EVENING", label: "Evening", emoji: "🌙" },
 ];
 
-export function TaskApp({
-  project,
-  initialTasks,
-}: {
-  project: Project;
-  initialTasks: Task[];
-}) {
+export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [breakingDownIds, setBreakingDownIds] = useState<Set<string>>(new Set());
-
-  // One modal instance for the whole page, shared by every "+" (row, Next
-  // Step panel, section headers, and the floating add-task button).
-  // undefined = closed; null = open, adding a root task; a task id = open,
-  // adding its subtask.
-  const [addTaskParentId, setAddTaskParentId] = useState<string | null | undefined>(
-    undefined
-  );
-  // Which bucket a root-level add lands in — set by whichever "+" opened
-  // the modal (a section header's or the general floating button's).
-  const [addTaskTimeOfDay, setAddTaskTimeOfDay] = useState<TimeOfDay>("ANYTIME");
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   // Which row's swipe-to-reveal actions are open — lifted here so opening
   // one row's actions closes any other row's, across every section.
@@ -102,20 +84,6 @@ export function TaskApp({
     setTasks((prev) => mergeTasks(prev, newTasks));
   }
 
-  function openAddTaskModal(parentTaskId: string | null, timeOfDay: TimeOfDay = "ANYTIME") {
-    setAddTaskParentId(parentTaskId);
-    setAddTaskTimeOfDay(timeOfDay);
-  }
-
-  async function handleAddTask(title: string) {
-    const task = await createTask(project.id, {
-      title,
-      parentTaskId: addTaskParentId ?? null,
-      timeOfDay: addTaskTimeOfDay,
-    });
-    upsertTasks([task]);
-  }
-
   async function handleToggleStatus(task: TaskNode) {
     const nextStatus = task.status === "DONE" ? "TODO" : "DONE";
     const updated = await updateTask(task.id, { status: nextStatus });
@@ -158,20 +126,6 @@ export function TaskApp({
     }
 
     upsertTasks(updated);
-  }
-
-  async function handleBreakdown(taskId: string) {
-    setBreakingDownIds((prev) => new Set(prev).add(taskId));
-    try {
-      const subtasks = await breakdownTask(taskId);
-      upsertTasks(subtasks);
-    } finally {
-      setBreakingDownIds((prev) => {
-        const next = new Set(prev);
-        next.delete(taskId);
-        return next;
-      });
-    }
   }
 
   async function handleEdit(task: TaskNode, title: string) {
@@ -246,13 +200,13 @@ export function TaskApp({
                   />
                 </svg>
               </button>
-              <button
+              <Link
+                href={`/tasks/new?timeOfDay=${key}`}
                 className={styles.sectionAddButton}
-                onClick={() => openAddTaskModal(null, key)}
                 aria-label={`Add task to ${label}`}
               >
                 +
-              </button>
+              </Link>
             </div>
 
             {!isCollapsed && (
@@ -327,25 +281,12 @@ export function TaskApp({
         </>
       )}
 
-      {addTaskParentId !== undefined && (
-        <AddTaskModal
-          parentTaskId={addTaskParentId}
-          onAdd={handleAddTask}
-          onSuggest={
-            addTaskParentId ? () => handleBreakdown(addTaskParentId) : undefined
-          }
-          isBreakingDown={addTaskParentId ? breakingDownIds.has(addTaskParentId) : false}
-          onClose={() => setAddTaskParentId(undefined)}
-        />
-      )}
-
       <div className={styles.nextStepBar}>
         <div className={styles.nextStepBarInner}>
           <NextActionCard
             task={nextTask}
             ancestors={nextTaskAncestors}
             onComplete={handleToggleStatus}
-            onOpenAddSubtask={openAddTaskModal}
           />
         </div>
       </div>

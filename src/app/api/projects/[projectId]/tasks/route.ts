@@ -45,6 +45,8 @@ export async function POST(
       priority: body.priority ?? "MEDIUM",
       dueDate: body.dueDate ? new Date(body.dueDate) : null,
       ...(body.timeOfDay ? { timeOfDay: body.timeOfDay } : {}),
+      scheduledFor: body.scheduledFor ? new Date(body.scheduledFor) : null,
+      scheduledTime: body.scheduledTime ? new Date(body.scheduledTime) : null,
       order: keyForAppend(lastSibling?.order ?? null),
     },
   });

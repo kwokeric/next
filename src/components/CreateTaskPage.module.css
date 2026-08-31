@@ -1,0 +1,374 @@
+.page {
+  width: 100vw;
+  max-width: 42rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+  position: sticky;
+  top: 0;
+  background: var(--color-bg);
+  z-index: 10;
+}
+
+.headerLink {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.9375rem;
+  color: var(--color-muted-fg);
+  cursor: pointer;
+}
+
+.headerTitle {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.pillPrimary {
+  border: none;
+  border-radius: 1rem;
+  padding: 0.45rem 1rem;
+  background: var(--blue-400);
+  color: var(--btn-primary-fg);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pillPrimary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.body {
+  flex: 1;
+  padding: 1.5rem 1rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.parentContext {
+  font-size: 0.875rem;
+  color: var(--color-muted-fg);
+  margin: -0.75rem 0 0;
+}
+
+.titleInput {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--color-fg);
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 600;
+  padding: 0;
+  width: 100%;
+}
+
+.fieldBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fieldLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted-fg);
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chipRowNowrap {
+  flex-wrap: nowrap;
+}
+
+.chip {
+  flex: 1;
+  height: 2.25rem;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid transparent;
+  border-radius: 1rem;
+  padding: 0 0.75rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-muted-fg);
+  cursor: pointer;
+}
+
+.chipNeutral {
+  background: var(--color-surface);
+  border-color: var(--color-border-subtle);
+}
+
+.chipSelected {
+  border-color: var(--blue-400);
+  color: var(--color-fg);
+}
+
+.pillInput {
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  color-scheme: light dark;
+}
+
+/* Custom time-of-day dropdown — a native <select>'s open menu can't be
+   restyled (browser chrome, not the page), so this is a plain button +
+   panel instead, letting the trigger's bottom corners square off while
+   open to read as one connected shape with the menu under it. */
+.todWrapper {
+  position: relative;
+  flex: 1;
+}
+
+.todTrigger {
+  width: 100%;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.todTriggerOpen {
+  border-color: var(--blue-400);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.todLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.todCaret {
+  flex-shrink: 0;
+  color: var(--color-muted-fg);
+  transition: transform 0.15s ease;
+}
+
+.todCaretOpen {
+  transform: rotate(180deg);
+}
+
+.todPanel {
+  position: absolute;
+  top: 100%;
+  left: -1.5px;
+  right: -1.5px;
+  margin-top: -1.5px;
+  background: var(--color-bg);
+  border: 1.5px solid var(--blue-400);
+  border-top: none;
+  border-radius: 0 0 1rem 1rem;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.todOption {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-fg);
+  cursor: pointer;
+}
+
+.todOption:hover,
+.todOptionSelected {
+  background: var(--color-surface-hover);
+}
+
+.subtaskList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.subtaskRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--color-border-subtle);
+  font-size: 0.9rem;
+}
+
+.subtaskRow:first-child {
+  border-top: none;
+}
+
+.subtaskRow span:nth-child(2) {
+  flex: 1;
+}
+
+.miniRing {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
+.miniX {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--color-danger-fg);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.addSubtaskInput {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+  font-size: 0.875rem;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  outline: none;
+  margin-top: 0.4rem;
+}
+
+.subtaskActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.subtaskBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Same rotating-conic-gradient-border trick as NextActionCard's
+   .animatedBorder — pulled onto a small pill button instead of a full
+   card, with an extra hue mixed in so it reads more vibrant than the
+   muted two-tone rotation used elsewhere. */
+.subtaskGenerateBtn {
+  position: relative;
+  border-color: transparent;
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+.subtaskGenerateBtn .btnLabel {
+  position: relative;
+  z-index: 1;
+}
+
+.rotatingBorder {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 1.5px;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}
+
+.rotatingBorder::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  aspect-ratio: 1;
+  background: conic-gradient(
+    from 0deg,
+    var(--blue-300),
+    var(--green-300),
+    var(--orange-400),
+    var(--blue-400),
+    var(--blue-300),
+    var(--green-300),
+    var(--orange-400),
+    var(--blue-400)
+  );
+  animation: rotatingBorderSpin 3s linear infinite;
+  will-change: transform;
+}
+
+@keyframes rotatingBorderSpin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rotatingBorder::before {
+    animation: none;
+  }
+}
+
+.errorText {
+  font-size: 0.8125rem;
+  color: var(--color-danger-fg);
+  margin: 0;
+}
+
+.ctaBar {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  padding: 1rem;
+  border-top: 1px solid var(--color-border-subtle);
+  background: linear-gradient(to bottom, transparent, var(--color-bg) 40%);
+}
+
+.pillPrimaryLg {
+  width: 100%;
+  border: none;
+  border-radius: 1rem;
+  padding: 0.85rem;
+  background: var(--blue-400);
+  color: var(--btn-primary-fg);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pillPrimaryLg:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

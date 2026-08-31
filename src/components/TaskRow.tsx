@@ -14,8 +14,6 @@ export function TaskRow({
   depth,
   isNextTask,
   nextTaskId,
-  openRowId,
-  onRowOpenChange,
   onToggleStatus,
   onEdit,
   onDelete,
@@ -27,10 +25,6 @@ export function TaskRow({
   // compute their own isNextTask — the next task is usually a subtask, not
   // a root, since it's found via depth-first descent (see findNextTask).
   nextTaskId: string | null;
-  // Lifted to the app root so swiping one row open closes any other row
-  // that was already open — only one row's actions can be visible at once.
-  openRowId: string | null;
-  onRowOpenChange: (id: string | null) => void;
   onToggleStatus: (task: TaskNode) => void;
   onEdit: (task: TaskNode, title: string) => void;
   onDelete: (task: TaskNode) => void;
@@ -42,7 +36,7 @@ export function TaskRow({
   const [_taskTitle, setTaskTitle] = useState(task.title);
   const [expanded, setExpanded] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const swiped = openRowId === task.id;
+  const [swiped, setSwiped] = useState(false);
 
   const isDone = task.status === "DONE";
   const hasSubtasks = task.subtasks.length > 0;
@@ -66,20 +60,6 @@ export function TaskRow({
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [isEditing, commitEdit]);
-
-  // Close the swiped-open actions on a tap outside this row.
-  useEffect(() => {
-    if (!swiped) return;
-
-    function handlePointerDown(e: PointerEvent) {
-      if (rowRef.current && !rowRef.current.contains(e.target as Node)) {
-        onRowOpenChange(null);
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [swiped, onRowOpenChange]);
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     setTaskTitle(e.target.value);
@@ -113,8 +93,8 @@ export function TaskRow({
     const dx = e.clientX - swipeStartX.current;
     swipeStartX.current = null;
     didSwipeRef.current = Math.abs(dx) > 10;
-    if (dx < -SWIPE_THRESHOLD_PX) onRowOpenChange(task.id);
-    else if (dx > SWIPE_THRESHOLD_PX) onRowOpenChange(null);
+    if (dx < -SWIPE_THRESHOLD_PX) setSwiped(true);
+    else if (dx > SWIPE_THRESHOLD_PX) setSwiped(false);
   }
 
   // Swallow the click a swipe gesture leaves behind, so it doesn't also
@@ -197,7 +177,7 @@ export function TaskRow({
             className={styles.editButton}
             aria-label="Edit task"
           >
-            <EditIcon size={20} />
+            <EditIcon size={2} />
           </button>
 
           <button
@@ -219,8 +199,6 @@ export function TaskRow({
               depth={depth + 1}
               isNextTask={subtask.id === nextTaskId}
               nextTaskId={nextTaskId}
-              openRowId={openRowId}
-              onRowOpenChange={onRowOpenChange}
               onToggleStatus={onToggleStatus}
               onDelete={onDelete}
               onEdit={onEdit}
