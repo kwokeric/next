@@ -1,4 +1,4 @@
-## Next — A simpler task manager
+## ⏭️ Next — A simpler task manager
 
 There are many task managers help you organize work. Next focuses on the hardest
 part: getting started. Big tasks (clean the apartment, plan a trip) create
@@ -8,16 +8,9 @@ is especially true for people with ADHD, anxiety, or other causes of
 executive dysfunction.
 
 Next's answer: any task can be divided into a smaller one. Keep dividing
-until the next step feels almost impossible to avoid — by hand, or with
-Claude proposing a breakdown — and Next always surfaces that one next action
-instead of a wall of to-dos, rolling progress up the tree as subtasks get
-checked off.
-
-Creating a task opens its own screen, where you can break it down right
-away — by hand or by asking Claude to generate subtasks — and optionally
-give it a schedule: a specific date, a rough time of day, or an exact time.
-Scheduling is never required, so jotting down a quick reminder stays just
-as fast as planning something out.
+until the next step feels almost impossible to avoid — by hand or with
+✨AI✨. Next also simplifies task execution by surfacing the next action
+instead of a wall of to-dos.
 
 <table>
   <tr>
@@ -32,7 +25,7 @@ as fast as planning something out.
   </tr>
 </table>
 
-## Stack
+## 💻 Stack
 
 - Next.js 16 (App Router) + TypeScript + CSS Modules
 - Prisma 7 (driver adapter: `@prisma/adapter-pg`) + PostgreSQL
