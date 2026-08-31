@@ -1,6 +1,13 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-export const anthropic = new Anthropic();
+// Identity-linked API keys (issued under an org with identity federation
+// enabled) are workspace-scoped — the SDK doesn't send that header on its
+// own, so requests 400 without it.
+export const anthropic = new Anthropic({
+  defaultHeaders: process.env.ANTHROPIC_WORKSPACE_ID
+    ? { "anthropic-workspace-id": process.env.ANTHROPIC_WORKSPACE_ID }
+    : undefined,
+});
 
 export async function generateSubtasks(
   title: string,
@@ -16,7 +23,8 @@ export async function generateSubtasks(
           `Break this task down into 3-6 smaller, concrete, immediately actionable subtasks.`,
           `Task: "${title}"`,
           description ? `Additional context: ${description}` : null,
-          `Each subtask should be small enough to start without further thought.`,
+          `Each subtask should break the initial task down into smaller, more manageable pieces.`,
+          `Try to keep tasks to around 10-15 words.`,
         ]
           .filter(Boolean)
           .join("\n"),
