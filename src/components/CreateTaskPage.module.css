@@ -7,11 +7,15 @@
   flex-direction: column;
 }
 
+/* Grid, not flex — a 3rd column that reserves its 1fr share even with
+   nothing in it, so the title stays centered between Cancel and the
+   (now-empty) right side instead of drifting once the Create button
+   that used to balance it is gone. */
 .header {
   flex-shrink: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding: 1rem;
   border-bottom: 1px solid var(--color-border-subtle);
   position: sticky;
@@ -28,28 +32,13 @@
   font-size: 0.9375rem;
   color: var(--color-muted-fg);
   cursor: pointer;
+  text-align: left;
 }
 
 .headerTitle {
-  font-size: 1rem;
+  font-size: 1.75rem;
   font-weight: 600;
-}
-
-.pillPrimary {
-  border: none;
-  border-radius: 1rem;
-  padding: 0.45rem 1rem;
-  background: var(--blue-400);
-  color: var(--btn-primary-fg);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.pillPrimary:disabled {
-  opacity: 0.45;
-  cursor: default;
+  font-family: var(--font-belgiano-serif), serif;
 }
 
 .body {
@@ -196,6 +185,9 @@
 }
 
 .dropdownLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -234,6 +226,7 @@
   box-sizing: border-box;
   display: flex;
   align-items: center;
+  gap: 0.3rem;
   text-align: left;
   border: none;
   background: none;
@@ -322,6 +315,7 @@
    reads as disabled for these two — they're actions, not toggles, so they
    need a normal enabled color regardless of chipSelected. */
 .subtaskBtn {
+  gap: 0.3rem;
   color: var(--color-fg);
 }
 

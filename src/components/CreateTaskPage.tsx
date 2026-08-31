@@ -6,17 +6,23 @@ import type { Task, TimeOfDay } from "@prisma/client";
 import { createTask, updateTask, deleteTask, breakdownTask } from "@/lib/api-client";
 import { autogrow } from "@/lib/autogrow";
 import { SparkleIcon } from "./icons/SparkleIcon";
+import { BackIcon } from "./icons/BackIcon";
+import { PlusIcon } from "./icons/PlusIcon";
+import { ClockIcon } from "./icons/ClockIcon";
+import { SunriseIcon } from "./icons/SunriseIcon";
+import { SunIcon } from "./icons/SunIcon";
+import { MoonIcon } from "./icons/MoonIcon";
 import styles from "./CreateTaskPage.module.css";
 
 type DateChoice = "" | "today" | "tomorrow" | "custom";
 type TimeChoice = "" | "anytime" | "morning" | "afternoon" | "evening" | "exact";
 type TimeOfDayChoice = Exclude<TimeChoice, "" | "exact">;
 
-const TIME_OF_DAY_OPTIONS: { value: TimeOfDayChoice; label: string }[] = [
-  { value: "anytime", label: "🕐 Anytime" },
-  { value: "morning", label: "🌅 Morning" },
-  { value: "afternoon", label: "☀️ Afternoon" },
-  { value: "evening", label: "🌙 Evening" },
+const TIME_OF_DAY_OPTIONS: { value: TimeOfDayChoice; icon: React.ReactNode; label: string }[] = [
+  { value: "anytime", icon: <ClockIcon size={14} />, label: "Anytime" },
+  { value: "morning", icon: <SunriseIcon size={14} />, label: "Morning" },
+  { value: "afternoon", icon: <SunIcon size={14} />, label: "Afternoon" },
+  { value: "evening", icon: <MoonIcon size={14} />, label: "Evening" },
 ];
 
 // Maps a clock time to a bucket so picking an exact time also fills in a
@@ -103,6 +109,9 @@ export function CreateTaskPage({
         ? timeOfDayFromExactTime(exactTime)
         : ""
       : timeChoice;
+  const selectedTimeOfDayOption = TIME_OF_DAY_OPTIONS.find(
+    (opt) => opt.value === effectiveTimeOfDay
+  );
 
   function computeScheduledFor(): string | null {
     if (dateChoice === "today") return localDateString(0);
@@ -248,18 +257,16 @@ export function CreateTaskPage({
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <button type="button" className={styles.headerLink} onClick={handleCancel}>
-          Cancel
-        </button>
-        <span className={styles.headerTitle}>{parentTask ? "Add subtask" : "New task"}</span>
         <button
           type="button"
-          className={styles.pillPrimary}
-          disabled={!hasTitle || isSubmitting}
-          onClick={handleCreate}
+          className={styles.headerLink}
+          onClick={handleCancel}
+          aria-label="Back"
         >
-          Create
+          <BackIcon size={20} />
         </button>
+        <span className={styles.headerTitle}>{parentTask ? "Add subtask" : "New task"}</span>
+        <div/>
       </div>
 
       <div className={styles.body}>
@@ -335,8 +342,14 @@ export function CreateTaskPage({
                 aria-expanded={todOpen}
               >
                 <span className={styles.dropdownLabel}>
-                  {TIME_OF_DAY_OPTIONS.find((opt) => opt.value === effectiveTimeOfDay)?.label ??
-                    "Time of day"}
+                  {selectedTimeOfDayOption ? (
+                    <>
+                      {selectedTimeOfDayOption.icon}
+                      {selectedTimeOfDayOption.label}
+                    </>
+                  ) : (
+                    "Time of day"
+                  )}
                 </span>
                 <svg
                   className={`${styles.dropdownCaret} ${todOpen ? styles.dropdownCaretOpen : ""}`}
@@ -371,6 +384,7 @@ export function CreateTaskPage({
                         setTodOpen(false);
                       }}
                     >
+                      {opt.icon}
                       {opt.label}
                     </button>
                   ))}
@@ -448,7 +462,8 @@ export function CreateTaskPage({
               disabled={!hasTitle}
               onClick={() => (addingSubtask ? handleAddSubtask() : setAddingSubtask(true))}
             >
-              + Add subtask
+              <PlusIcon size={12} />
+              Add subtask
             </button>
             <button
               type="button"

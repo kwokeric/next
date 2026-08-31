@@ -14,6 +14,11 @@ import {
 import { updateTask, deleteTask } from "@/lib/api-client";
 import { NextActionCard } from "./NextActionCard";
 import { TaskRow } from "./TaskRow";
+import { PlusIcon } from "./icons/PlusIcon";
+import { ClockIcon } from "./icons/ClockIcon";
+import { SunriseIcon } from "./icons/SunriseIcon";
+import { SunIcon } from "./icons/SunIcon";
+import { MoonIcon } from "./icons/MoonIcon";
 import styles from "./TaskApp.module.css";
 
 // How long a task stays in its section after reaching 100% progress before
@@ -21,11 +26,11 @@ import styles from "./TaskApp.module.css";
 // register instead of the row jumping sections the instant it completes.
 const COMPLETION_MOVE_DELAY_MS = 500;
 
-const TIME_OF_DAY_SECTIONS: { key: TimeOfDay; label: string; emoji: string }[] = [
-  { key: "ANYTIME", label: "Anytime", emoji: "🕐" },
-  { key: "MORNING", label: "Morning", emoji: "🌅" },
-  { key: "AFTERNOON", label: "Afternoon", emoji: "☀️" },
-  { key: "EVENING", label: "Evening", emoji: "🌙" },
+const TIME_OF_DAY_SECTIONS: { key: TimeOfDay; label: string; icon: React.ReactNode }[] = [
+  { key: "ANYTIME", label: "Anytime", icon: <ClockIcon size={14} /> },
+  { key: "MORNING", label: "Morning", icon: <SunriseIcon size={14} /> },
+  { key: "AFTERNOON", label: "Afternoon", icon: <SunIcon size={14} /> },
+  { key: "EVENING", label: "Evening", icon: <MoonIcon size={14} /> },
 ];
 
 export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
@@ -166,7 +171,7 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
         </>
       )}
 
-      {TIME_OF_DAY_SECTIONS.map(({ key, label, emoji }) => {
+      {TIME_OF_DAY_SECTIONS.map(({ key, label, icon }) => {
         const tasksInSection = activeOrPendingTasks.filter((task) => task.timeOfDay === key);
         const isCollapsed = collapsedSections.has(key);
         return (
@@ -177,8 +182,8 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
                 onClick={() => toggleSection(key)}
                 aria-expanded={!isCollapsed}
               >
-                <span className={styles.sectionEmoji} aria-hidden="true">
-                  {emoji}
+                <span className={styles.sectionIcon} aria-hidden="true">
+                  {icon}
                 </span>
                 <span className={styles.sectionHeader}>
                   {label} ({tasksInSection.length})
@@ -205,7 +210,7 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
                 className={styles.sectionAddButton}
                 aria-label={`Add task to ${label}`}
               >
-                +
+                <PlusIcon size={12} />
               </Link>
             </div>
 

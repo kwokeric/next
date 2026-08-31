@@ -70,7 +70,9 @@
   background: #ebefff;
 }
 
-.sectionEmoji {
+.sectionIcon {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.875rem;
   line-height: 1;
 }
