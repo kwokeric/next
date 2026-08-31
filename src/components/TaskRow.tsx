@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getTaskProgress, type TaskNode } from "@/lib/task-tree";
+import { autogrow } from "@/lib/autogrow";
 import { ProgressRing } from "./ProgressRing";
 import { EditIcon } from "./icons/EditIcon";
 import { DeleteIcon } from "./icons/DeleteIcon";
@@ -30,7 +31,7 @@ export function TaskRow({
   onDelete: (task: TaskNode) => void;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const swipeStartX = useRef<number | null>(null);
   const didSwipeRef = useRef(false);
   const [_taskTitle, setTaskTitle] = useState(task.title);
@@ -61,16 +62,23 @@ export function TaskRow({
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [isEditing, commitEdit]);
 
-  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleInputChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setTaskTitle(e.target.value);
+    autogrow(e.target);
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter') {
+      e.preventDefault();
       commitEdit();
       inputRef.current?.blur();
     }
   }
+
+  const setInputRef = useCallback((el: HTMLTextAreaElement | null) => {
+    inputRef.current = el;
+    autogrow(el);
+  }, []);
 
   const onEditClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -125,12 +133,13 @@ export function TaskRow({
           className={`${styles.title} ${isDone ? styles.titleDone : ""}`}
           onClick={() => setIsEditing(true)}
         >
-          <input
+          <textarea
             className={styles.input}
+            rows={1}
             value={_taskTitle}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            ref={inputRef}
+            ref={setInputRef}
           />
         </span>
 

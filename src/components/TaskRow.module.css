@@ -43,6 +43,11 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  /* Opts this element out of .row's align-items: center on its own —
+     when the textarea below grows past one line, the ring/buttons/count
+     pill stay put at their usual single-line position instead of
+     re-centering against the taller row. */
+  align-self: flex-start;
   flex: 1;
 }
 
@@ -51,13 +56,24 @@
   text-decoration: line-through;
 }
 
+/* Auto-growing textarea (see src/lib/autogrow.ts) instead of a
+   single-line input, so a long title wraps and stays fully readable
+   instead of scrolling inside the field. padding + line-height are
+   tuned so one line still measures the same 2rem the row was built
+   around. */
 .input {
   background-color: transparent;
   border: none;
   outline: none;
-  height: 2rem;
+  resize: none;
+  overflow: hidden;
+  min-height: 2rem;
   width: 100%;
   min-width: 0;
+  padding: 0.3rem 0;
+  line-height: 1.4;
+  font: inherit;
+  color: inherit;
 }
 
 .countPill {

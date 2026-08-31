@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { Task, TimeOfDay } from "@prisma/client";
 import { createTask, updateTask, deleteTask, breakdownTask } from "@/lib/api-client";
+import { autogrow } from "@/lib/autogrow";
 import { SparkleIcon } from "./icons/SparkleIcon";
 import styles from "./CreateTaskPage.module.css";
 
@@ -385,14 +386,22 @@ export function CreateTaskPage({
             <ul className={styles.subtaskList}>
               {subtasks.map((subtask) => (
                 <li key={subtask.id} className={styles.subtaskRow}>
-                  <input
+                  <textarea
                     className={styles.subtaskInput}
+                    rows={1}
                     value={subtask.title}
-                    onChange={(e) => handleSubtaskTitleChange(subtask.id, e.target.value)}
+                    onChange={(e) => {
+                      handleSubtaskTitleChange(subtask.id, e.target.value);
+                      autogrow(e.target);
+                    }}
                     onBlur={() => handleSubtaskTitleBlur(subtask)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") e.currentTarget.blur();
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        e.currentTarget.blur();
+                      }
                     }}
+                    ref={autogrow}
                   />
                   <button
                     type="button"
@@ -406,18 +415,26 @@ export function CreateTaskPage({
               ))}
               {addingSubtask && (
                 <li className={styles.subtaskRow}>
-                  <input
+                  <textarea
                     className={styles.subtaskInput}
                     placeholder="Subtask name"
+                    rows={1}
                     value={newSubtaskTitle}
-                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                    onChange={(e) => {
+                      setNewSubtaskTitle(e.target.value);
+                      autogrow(e.target);
+                    }}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") handleAddSubtask();
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddSubtask();
+                      }
                     }}
                     onBlur={() => {
                       if (!newSubtaskTitle.trim()) setAddingSubtask(false);
                     }}
                     autoFocus
+                    ref={autogrow}
                   />
                 </li>
               )}
