@@ -77,6 +77,10 @@
   width: 100%;
 }
 
+.titleInput::placeholder {
+  color: var(--color-muted);
+}
+
 .fieldBlock {
   display: flex;
   flex-direction: column;
@@ -101,8 +105,20 @@
   flex-wrap: nowrap;
 }
 
+/* Grid instead of flex here specifically: Chrome enforces a hard minimum
+   render width on <input type="time"> that flex's min-width: 0 doesn't
+   override, which threw the exact-time input and the dropdown out of
+   balance under flex's equal-share sizing. Grid's minmax(0, 1fr) tracks
+   hold both columns to the same width regardless. */
+.timeRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+}
+
 .chip {
   flex: 1;
+  min-width: 0;
   height: 2.25rem;
   box-sizing: border-box;
   display: inline-flex;
@@ -114,7 +130,7 @@
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--color-muted-fg);
+  color: var(--color-muted);
   cursor: pointer;
 }
 
@@ -135,64 +151,92 @@
   color-scheme: light dark;
 }
 
-/* Custom time-of-day dropdown — a native <select>'s open menu can't be
-   restyled (browser chrome, not the page), so this is a plain button +
-   panel instead, letting the trigger's bottom corners square off while
-   open to read as one connected shape with the menu under it. */
-.todWrapper {
-  position: relative;
-  flex: 1;
+/* The date field's text and calendar icon are pinned to opposite edges
+   by default (the text part flex-grows to fill the input). Stopping it
+   from growing lets the .chip's own justify-content: center take over
+   and center the text+icon as one group instead. */
+.pillInput::-webkit-datetime-edit {
+  flex: none;
 }
 
-.todTrigger {
+.orLabel {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  padding: 0 0.1rem;
+}
+
+/* Custom dropdown — used by the time-of-day field. A native <select>'s
+   open menu can't be restyled (browser chrome, not the page), so this is
+   a plain button + panel instead, letting the trigger's bottom corners
+   square off while open to read as one connected shape with the menu
+   under it. */
+.dropdownWrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.dropdownTrigger {
   width: 100%;
   justify-content: space-between;
   gap: 0.4rem;
 }
 
-.todTriggerOpen {
+.dropdownTriggerOpen {
   border-color: var(--blue-400);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
 
-.todLabel {
+.dropdownLabel {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.todCaret {
+.dropdownCaret {
   flex-shrink: 0;
   color: var(--color-muted-fg);
   transition: transform 0.15s ease;
 }
 
-.todCaretOpen {
+.dropdownCaretOpen {
   transform: rotate(180deg);
 }
 
-.todPanel {
+.dropdownPanel {
   position: absolute;
   top: 100%;
-  left: -1.5px;
-  right: -1.5px;
+  left: 0;
+  right: 0;
   margin-top: -1.5px;
+  box-sizing: border-box;
+  max-height: 12rem;
+  overflow-y: auto;
   background: var(--color-bg);
   border: 1.5px solid var(--blue-400);
   border-top: none;
   border-radius: 0 0 1rem 1rem;
-  overflow: hidden;
   z-index: 20;
 }
 
-.todOption {
-  display: block;
+.dropdownOption {
   width: 100%;
+  height: 2.25rem;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
   text-align: left;
   border: none;
   background: none;
-  padding: 0.5rem 0.75rem;
+  padding: 0 0.75rem;
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -200,8 +244,8 @@
   cursor: pointer;
 }
 
-.todOption:hover,
-.todOptionSelected {
+.dropdownOption:hover,
+.dropdownOptionSelected {
   background: var(--color-surface-hover);
 }
 
@@ -226,45 +270,46 @@
   border-top: none;
 }
 
-.subtaskRow span:nth-child(2) {
+/* Matches the listing page's row input — borderless, no visible box, the
+   row's own border-top is what separates entries. The "add new" row uses
+   this same class so it reads as just another row, not a different kind
+   of control. */
+.subtaskInput {
   flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  height: 2rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--color-fg);
 }
 
-.miniRing {
-  width: 1rem;
-  height: 1rem;
-  border-radius: 50%;
-  border: 1.5px solid var(--color-border-subtle);
-  flex-shrink: 0;
+.subtaskInput::placeholder {
+  color: var(--color-muted);
 }
 
 .miniX {
   border: none;
   background: none;
   padding: 0;
-  color: var(--color-danger-fg);
+  color: var(--color-muted);
   font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
 }
 
-.addSubtaskInput {
-  width: 100%;
-  border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.65rem;
-  font: inherit;
-  font-size: 0.875rem;
-  background: var(--color-bg);
-  color: var(--color-fg);
-  outline: none;
-  margin-top: 0.4rem;
-}
-
 .subtaskActions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.4rem;
+}
+
+/* .chip's default color is the light "unselected/placeholder" gray, which
+   reads as disabled for these two — they're actions, not toggles, so they
+   need a normal enabled color regardless of chipSelected. */
+.subtaskBtn {
+  color: var(--color-fg);
 }
 
 .subtaskBtn:disabled {
@@ -286,6 +331,13 @@
 .subtaskGenerateBtn .btnLabel {
   position: relative;
   z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.sparkleIcon {
+  flex-shrink: 0;
 }
 
 .rotatingBorder {

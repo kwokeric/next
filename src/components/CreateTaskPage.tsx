@@ -4,17 +4,28 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { Task, TimeOfDay } from "@prisma/client";
 import { createTask, updateTask, deleteTask, breakdownTask } from "@/lib/api-client";
+import { SparkleIcon } from "./icons/SparkleIcon";
 import styles from "./CreateTaskPage.module.css";
 
 type DateChoice = "" | "today" | "tomorrow" | "custom";
 type TimeChoice = "" | "anytime" | "morning" | "afternoon" | "evening" | "exact";
+type TimeOfDayChoice = Exclude<TimeChoice, "" | "exact">;
 
-const TIME_OF_DAY_OPTIONS: { value: Exclude<TimeChoice, "" | "exact">; label: string }[] = [
+const TIME_OF_DAY_OPTIONS: { value: TimeOfDayChoice; label: string }[] = [
   { value: "anytime", label: "🕐 Anytime" },
   { value: "morning", label: "🌅 Morning" },
   { value: "afternoon", label: "☀️ Afternoon" },
   { value: "evening", label: "🌙 Evening" },
 ];
+
+// Maps a clock time to a bucket so picking an exact time also fills in a
+// sensible time-of-day, instead of leaving it at the ANYTIME default.
+function timeOfDayFromExactTime(value: string): TimeOfDayChoice {
+  const hour = parseInt(value.split(":")[0] ?? "0", 10);
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 17) return "afternoon";
+  return "evening";
+}
 
 function localDateString(offsetDays: number): string {
   const d = new Date();
@@ -23,6 +34,31 @@ function localDateString(offsetDays: number): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+// Closes an open dropdown on an outside tap or Escape.
+function useCloseOnOutside(
+  ref: React.RefObject<HTMLElement | null>,
+  open: boolean,
+  onClose: () => void
+) {
+  useEffect(() => {
+    if (!open) return;
+
+    function handlePointerDown(e: PointerEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open, ref, onClose]);
 }
 
 export function CreateTaskPage({
@@ -56,25 +92,16 @@ export function CreateTaskPage({
 
   const hasTitle = title.trim().length > 0;
 
-  useEffect(() => {
-    if (!todOpen) return;
+  useCloseOnOutside(todRef, todOpen, () => setTodOpen(false));
 
-    function handlePointerDown(e: PointerEvent) {
-      if (todRef.current && !todRef.current.contains(e.target as Node)) {
-        setTodOpen(false);
-      }
-    }
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") setTodOpen(false);
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [todOpen]);
+  // What the time-of-day dropdown should show: an explicit bucket pick, or
+  // (if an exact time is set instead) the bucket that time falls into.
+  const effectiveTimeOfDay: TimeOfDayChoice | "" =
+    timeChoice === "exact"
+      ? exactTime
+        ? timeOfDayFromExactTime(exactTime)
+        : ""
+      : timeChoice;
 
   function computeScheduledFor(): string | null {
     if (dateChoice === "today") return localDateString(0);
@@ -84,15 +111,7 @@ export function CreateTaskPage({
   }
 
   function computeTimeOfDay(): TimeOfDay | undefined {
-    if (
-      timeChoice === "anytime" ||
-      timeChoice === "morning" ||
-      timeChoice === "afternoon" ||
-      timeChoice === "evening"
-    ) {
-      return timeChoice.toUpperCase() as TimeOfDay;
-    }
-    return undefined;
+    return effectiveTimeOfDay ? (effectiveTimeOfDay.toUpperCase() as TimeOfDay) : undefined;
   }
 
   function computeScheduledTime(): string | null {
@@ -136,6 +155,7 @@ export function CreateTaskPage({
   async function handleAddSubtask() {
     const subtitle = newSubtaskTitle.trim();
     if (!subtitle) return;
+    setError(null);
     try {
       const parentId = await ensureDraftTask();
       const created = await createTask(projectId, { title: subtitle, parentTaskId: parentId });
@@ -167,6 +187,20 @@ export function CreateTaskPage({
       await deleteTask(id);
     } catch {
       setError("Couldn't remove that subtask.");
+    }
+  }
+
+  function handleSubtaskTitleChange(id: string, value: string) {
+    setSubtasks((prev) => prev.map((s) => (s.id === id ? { ...s, title: value } : s)));
+  }
+
+  async function handleSubtaskTitleBlur(subtask: Task) {
+    const trimmed = subtask.title.trim();
+    if (!trimmed) return;
+    try {
+      await updateTask(subtask.id, { title: trimmed });
+    } catch {
+      setError("Couldn't save that subtask's name.");
     }
   }
 
@@ -243,6 +277,15 @@ export function CreateTaskPage({
         <div className={styles.fieldBlock}>
           <div className={styles.fieldLabel}>Date</div>
           <div className={`${styles.chipRow} ${styles.chipRowNowrap}`}>
+            <input
+              type="date"
+              className={`${styles.chip} ${styles.chipNeutral} ${styles.pillInput} ${
+                dateChoice === "custom" ? styles.chipSelected : ""
+              }`}
+              value={customDate}
+              onChange={(e) => handleCustomDateChange(e.target.value)}
+              aria-label="Pick a date"
+            />
             <button
               type="button"
               className={`${styles.chip} ${styles.chipNeutral} ${
@@ -261,37 +304,41 @@ export function CreateTaskPage({
             >
               Tomorrow
             </button>
-            <input
-              type="date"
-              className={`${styles.chip} ${styles.chipNeutral} ${styles.pillInput} ${
-                dateChoice === "custom" ? styles.chipSelected : ""
-              }`}
-              value={customDate}
-              onChange={(e) => handleCustomDateChange(e.target.value)}
-              aria-label="Pick a date"
-            />
           </div>
         </div>
 
         <div className={styles.fieldBlock}>
           <div className={styles.fieldLabel}>Time</div>
-          <div className={styles.chipRow}>
-            <div className={styles.todWrapper} ref={todRef}>
+          <div className={`${styles.chipRow} ${styles.timeRow}`}>
+            <input
+              type="time"
+              step={300}
+              className={`${styles.chip} ${styles.chipNeutral} ${styles.pillInput} ${
+                timeChoice === "exact" ? styles.chipSelected : ""
+              }`}
+              value={exactTime}
+              onChange={(e) => handleExactTimeChange(e.target.value)}
+              aria-label="Pick an exact time"
+            />
+
+            <span className={styles.orLabel}>or</span>
+
+            <div className={styles.dropdownWrapper} ref={todRef}>
               <button
                 type="button"
-                className={`${styles.chip} ${styles.chipNeutral} ${styles.todTrigger} ${
-                  timeChoice && timeChoice !== "exact" ? styles.chipSelected : ""
-                } ${todOpen ? styles.todTriggerOpen : ""}`}
+                className={`${styles.chip} ${styles.chipNeutral} ${styles.dropdownTrigger} ${
+                  effectiveTimeOfDay ? styles.chipSelected : ""
+                } ${todOpen ? styles.dropdownTriggerOpen : ""}`}
                 onClick={() => setTodOpen((v) => !v)}
                 aria-haspopup="listbox"
                 aria-expanded={todOpen}
               >
-                <span className={styles.todLabel}>
-                  {TIME_OF_DAY_OPTIONS.find((opt) => opt.value === timeChoice)?.label ??
+                <span className={styles.dropdownLabel}>
+                  {TIME_OF_DAY_OPTIONS.find((opt) => opt.value === effectiveTimeOfDay)?.label ??
                     "Time of day"}
                 </span>
                 <svg
-                  className={`${styles.todCaret} ${todOpen ? styles.todCaretOpen : ""}`}
+                  className={`${styles.dropdownCaret} ${todOpen ? styles.dropdownCaretOpen : ""}`}
                   width="10"
                   height="10"
                   viewBox="0 0 10 10"
@@ -308,15 +355,15 @@ export function CreateTaskPage({
                 </svg>
               </button>
               {todOpen && (
-                <div className={styles.todPanel} role="listbox">
+                <div className={styles.dropdownPanel} role="listbox">
                   {TIME_OF_DAY_OPTIONS.map((opt) => (
                     <button
                       type="button"
                       key={opt.value}
                       role="option"
-                      aria-selected={timeChoice === opt.value}
-                      className={`${styles.todOption} ${
-                        timeChoice === opt.value ? styles.todOptionSelected : ""
+                      aria-selected={effectiveTimeOfDay === opt.value}
+                      className={`${styles.dropdownOption} ${
+                        effectiveTimeOfDay === opt.value ? styles.dropdownOptionSelected : ""
                       }`}
                       onClick={() => {
                         handleTimeOfDaySelect(opt.value);
@@ -329,27 +376,24 @@ export function CreateTaskPage({
                 </div>
               )}
             </div>
-            <input
-              type="time"
-              step={300}
-              className={`${styles.chip} ${styles.chipNeutral} ${styles.pillInput} ${
-                timeChoice === "exact" ? styles.chipSelected : ""
-              }`}
-              value={exactTime}
-              onChange={(e) => handleExactTimeChange(e.target.value)}
-              aria-label="Pick an exact time"
-            />
           </div>
         </div>
 
         <div className={styles.fieldBlock}>
           <div className={styles.fieldLabel}>Subtasks ({subtasks.length})</div>
-          {subtasks.length > 0 && (
+          {(subtasks.length > 0 || addingSubtask) && (
             <ul className={styles.subtaskList}>
               {subtasks.map((subtask) => (
                 <li key={subtask.id} className={styles.subtaskRow}>
-                  <span className={styles.miniRing} />
-                  <span>{subtask.title}</span>
+                  <input
+                    className={styles.subtaskInput}
+                    value={subtask.title}
+                    onChange={(e) => handleSubtaskTitleChange(subtask.id, e.target.value)}
+                    onBlur={() => handleSubtaskTitleBlur(subtask)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") e.currentTarget.blur();
+                    }}
+                  />
                   <button
                     type="button"
                     className={styles.miniX}
@@ -360,20 +404,24 @@ export function CreateTaskPage({
                   </button>
                 </li>
               ))}
+              {addingSubtask && (
+                <li className={styles.subtaskRow}>
+                  <input
+                    className={styles.subtaskInput}
+                    placeholder="Subtask name"
+                    value={newSubtaskTitle}
+                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddSubtask();
+                    }}
+                    onBlur={() => {
+                      if (!newSubtaskTitle.trim()) setAddingSubtask(false);
+                    }}
+                    autoFocus
+                  />
+                </li>
+              )}
             </ul>
-          )}
-
-          {addingSubtask && (
-            <input
-              className={styles.addSubtaskInput}
-              placeholder="Subtask name"
-              value={newSubtaskTitle}
-              onChange={(e) => setNewSubtaskTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddSubtask();
-              }}
-              autoFocus
-            />
           )}
 
           <div className={styles.subtaskActions}>
@@ -381,7 +429,7 @@ export function CreateTaskPage({
               type="button"
               className={`${styles.chip} ${styles.chipNeutral} ${styles.subtaskBtn}`}
               disabled={!hasTitle}
-              onClick={() => setAddingSubtask(true)}
+              onClick={() => (addingSubtask ? handleAddSubtask() : setAddingSubtask(true))}
             >
               + Add subtask
             </button>
@@ -392,7 +440,15 @@ export function CreateTaskPage({
               onClick={handleGenerate}
             >
               <span className={styles.rotatingBorder} aria-hidden="true" />
-              <span className={styles.btnLabel}>{isGenerating ? "Generating…" : "✨ Generate"}</span>
+              <span className={styles.btnLabel}>
+                {isGenerating ? (
+                  "Generating…"
+                ) : (
+                  <>
+                    <SparkleIcon size={14} className={styles.sparkleIcon} /> Generate
+                  </>
+                )}
+              </span>
             </button>
           </div>
         </div>
