@@ -13,7 +13,24 @@ Claude proposing a breakdown — and Next always surfaces that one next action
 instead of a wall of to-dos, rolling progress up the tree as subtasks get
 checked off.
 
-![Next screenshot](./screenshot.png)
+Creating a task opens its own screen, where you can break it down right
+away — by hand or by asking Claude to generate subtasks — and optionally
+give it a schedule: a specific date, a rough time of day, or an exact time.
+Scheduling is never required, so jotting down a quick reminder stays just
+as fast as planning something out.
+
+<table>
+  <tr>
+    <td width="50%">
+      <strong>Today's list, grouped by time of day</strong><br>
+      <img src="./screenshot-list.PNG" width="100%">
+    </td>
+    <td width="50%">
+      <strong>Creating a task, with optional scheduling</strong><br>
+      <img src="./screenshot-create.PNG" width="100%">
+    </td>
+  </tr>
+</table>
 
 ## Stack
 
@@ -30,6 +47,8 @@ checked off.
 - `src/lib/order.ts` — fractional-index helpers for sibling ordering
 - `src/lib/anthropic.ts` — Claude API call for task breakdown
 - `src/app/api/**` — REST-ish route handlers (projects, tasks, reorder, breakdown)
+- `src/app/tasks/new/page.tsx` — the full-screen create-task route
 - `src/components/TaskApp.tsx` — client-side state + orchestration
 - `src/components/TaskRow.tsx` — recursive task tree row
 - `src/components/NextActionCard.tsx` — the "Next Action" surface
+- `src/components/CreateTaskPage.tsx` — task creation, with subtasks and optional scheduling
