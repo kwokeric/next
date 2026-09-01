@@ -15,7 +15,7 @@
 .row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
   padding: 0.25rem 0.5rem;
   /* Swipe-to-reveal reads raw pointer coordinates — these stop a
      click-drag from being hijacked into a native text-selection/drag
@@ -25,11 +25,6 @@
   touch-action: pan-y;
 }
 
-/* Matches the edit/delete buttons' 2rem touch target so the progress
-   ring's icon (24px, no built-in padding) sits at the same inset as
-   the icons inside those buttons — otherwise the row gap alone leaves
-   the ring visually closer to its neighbor than the buttons are to
-   each other. */
 .ringSlot {
   flex-shrink: 0;
   width: 2rem;
@@ -43,10 +38,6 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  /* Opts this element out of .row's align-items: center on its own —
-     when the textarea below grows past one line, the ring/buttons/count
-     pill stay put at their usual single-line position instead of
-     re-centering against the taller row. */
   align-self: flex-start;
   flex: 1;
 }

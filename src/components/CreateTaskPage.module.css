@@ -8,9 +8,7 @@
 }
 
 /* Grid, not flex — a 3rd column that reserves its 1fr share even with
-   nothing in it, so the title stays centered between Cancel and the
-   (now-empty) right side instead of drifting once the Create button
-   that used to balance it is gone. */
+   nothing in it so the title stays centered. */
 .header {
   flex-shrink: 0;
   display: grid;
