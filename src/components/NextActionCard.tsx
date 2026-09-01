@@ -16,10 +16,24 @@ export function NextActionCard({
   return (
     <div className={styles.card}>
       <span className={styles.animatedBorder} aria-hidden="true" />
+      {task && (
+        <Link href="/focus" className={styles.caretHandle} aria-label="Open focus mode">
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+            <path
+              d="M4 10 L8 6 L12 10"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </Link>
+      )}
       <p className={styles.label}>Next step</p>
       {task ? (
         <div className={styles.taskRow}>
-          <div className={styles.taskTitleGroup}>
+          <Link href="/focus" className={styles.taskTitleGroup}>
             {ancestors.length > 0 && (
               <p className={styles.breadcrumb}>
                 <span className={styles.breadcrumbText}>
@@ -28,7 +42,7 @@ export function NextActionCard({
               </p>
             )}
             <span className={styles.taskTitle}>{task.title}</span>
-          </div>
+          </Link>
           <div className={styles.actions}>
             <Link
               href={`/tasks/new?parent=${task.id}`}
