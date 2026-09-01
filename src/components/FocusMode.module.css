@@ -7,11 +7,14 @@
   flex-direction: column;
 }
 
+/* Grid, not flex — a 3rd column that reserves its 1fr share even with
+   nothing in it so the title stays centered. Matches CreateTaskPage's
+   header treatment. */
 .header {
   flex-shrink: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding: 1rem;
   border-bottom: 1px solid var(--color-border-subtle);
   position: sticky;
@@ -20,15 +23,14 @@
   z-index: 10;
 }
 
-.tag {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-muted-fg);
+.headerTitle {
+  font-size: 1.75rem;
+  font-weight: 600;
+  font-family: var(--font-belgiano-serif), serif;
 }
 
 .closeBtn {
+  justify-self: end;
   flex-shrink: 0;
   width: 1.9rem;
   height: 1.9rem;
@@ -42,140 +44,60 @@
   cursor: pointer;
 }
 
-.body {
+/* Fills the rest of the viewport and centers the current-task card in it —
+   the whole point of "focus" mode is that one card, not a scrolling list. */
+.stage {
   flex: 1;
-  padding: 0 1rem 2.5rem;
-}
-
-.dayHead {
-  padding: 1.25rem 0 0.5rem;
-}
-
-.dayTitle {
-  font-family: var(--font-belgiano-serif), serif;
-  font-size: 2rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.daySubtitle {
-  margin-top: 0.25rem;
-  font-size: 0.8125rem;
-  color: var(--color-muted-fg);
-}
-
-.miniTrack {
-  margin-top: 0.5rem;
-  height: 0.375rem;
-  border-radius: 0.1875rem;
-  background: var(--color-border-subtle);
-  overflow: hidden;
-}
-
-.miniFill {
-  height: 100%;
-  background: var(--blue-400);
-  transition: width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1.25rem;
+  perspective: 900px;
 }
 
 .empty {
-  margin-top: 1.5rem;
   font-size: 1.125rem;
   color: var(--color-muted);
 }
 
-.stackWrap {
-  padding-top: 0.75rem;
-  display: flex;
-  flex-direction: column;
-}
-
 .taskCard {
   width: 100%;
-  border-radius: 1rem;
-  margin-bottom: 0.85rem;
-}
-
-.past {
-  opacity: 0.45;
-  transform: scale(0.93);
-  transform-origin: left center;
-  padding: 0.65rem 0.9rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.pastTitle {
-  text-decoration: line-through;
-  color: var(--color-muted);
-  font-weight: 400;
-  font-size: 0.92rem;
-  margin: 0;
-}
-
-.doneDotSmall {
-  flex-shrink: 0;
-  width: 1.1rem;
-  height: 1.1rem;
-  border-radius: 50%;
-  background: var(--blue-300);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.upcoming {
-  opacity: 0.55;
-  transform: scale(0.94);
-  transform-origin: left center;
-  background: var(--color-surface);
-  padding: 0.75rem 1rem;
+  border-radius: 1.1rem;
 }
 
 .current {
   background: var(--color-bg);
   border: 1px solid var(--color-border-subtle);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  padding: 1.05rem 1.05rem 0.7rem;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.1);
+  padding: 1.4rem 1.4rem 1rem;
+  position: relative;
+  z-index: 4;
 }
 
 .taskCardHead {
-  margin-bottom: 0.7rem;
+  margin-bottom: 1.1rem;
 }
 
 .taskTitle {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.2rem;
+  font-weight: 700;
   margin: 0;
 }
 
-.upcoming .taskTitle {
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-
 .taskMeta {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--color-muted-fg);
-  margin: 0.15rem 0 0;
-}
-
-.upcomingHint {
-  font-size: 0.72rem;
-  color: var(--color-muted);
-  margin: 0.35rem 0 0;
+  margin: 0.25rem 0 0;
 }
 
 .tlRow {
   display: flex;
-  gap: 0.65rem;
+  gap: 0.85rem;
 }
 
 .tlRail {
-  width: 1.2rem;
+  width: 1.4rem;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -183,11 +105,11 @@
 }
 
 .tlDot {
-  width: 0.5rem;
-  height: 0.5rem;
+  width: 0.55rem;
+  height: 0.55rem;
   border-radius: 50%;
   background: var(--color-border);
-  margin-top: 0.4rem;
+  margin-top: 0.5rem;
   flex-shrink: 0;
 }
 
@@ -196,28 +118,28 @@
 }
 
 .tlDotCurrent {
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 0.85rem;
+  height: 0.85rem;
   background: var(--blue-400);
-  box-shadow: 0 0 0 4px rgba(127, 184, 224, 0.22);
+  box-shadow: 0 0 0 5px rgba(127, 184, 224, 0.22);
 }
 
 .tlLine {
   flex: 1;
   width: 1.5px;
   background: var(--color-border-subtle);
-  margin-top: 0.15rem;
-  min-height: 0.6rem;
+  margin-top: 0.2rem;
+  min-height: 1.5rem;
 }
 
 .tlBody {
   flex: 1;
   min-width: 0;
-  padding-bottom: 0.7rem;
+  padding-bottom: 1.5rem;
 }
 
 .tlBodyDone {
-  padding-bottom: 0.5rem;
+  padding-bottom: 1.1rem;
 }
 
 .tlBodyDone .subTitle {
@@ -227,42 +149,42 @@
 }
 
 .tlBodyUpcoming {
-  padding-bottom: 0.75rem;
+  padding-bottom: 1.6rem;
 }
 
 .tlBodyUpcoming .subTitle {
   font-weight: 450;
   color: var(--color-fg);
-  font-size: 0.88rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  padding-top: 0.4rem;
+}
+
+.tlBodyCurrent {
+  padding-bottom: 1.6rem;
+}
+
+.tlBodyCurrent .subTitle {
+  font-weight: 700;
+  font-size: 1.02rem;
   line-height: 1.4;
   padding-top: 0.3rem;
 }
 
 .subTitle {
-  font-size: 0.9rem;
+  font-size: 0.98rem;
   font-weight: 500;
-  margin: 0.05rem 0 0;
+  margin: 0.1rem 0 0;
 }
 
-.heroRow {
-  background: #eef7fc;
-  border-radius: 0.75rem;
-  padding: 0.65rem 0.6rem 0.7rem 0.75rem;
-  margin: -0.1rem 0 0.1rem;
-}
-
-.heroTitle {
-  font-size: 0.94rem;
-  font-weight: 600;
-  line-height: 1.35;
-  margin: 0.15rem 0 0;
-}
-
-.heroActions {
+/* Title + kebab share a row so the button always sits to the right of the
+   step it belongs to, instead of the old single boxed-in "hero" for
+   whichever step happened to be current. */
+.tlRowContent {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 0.5rem;
-  margin-top: 0.6rem;
 }
 
 .kebabWrap {
@@ -271,22 +193,23 @@
 }
 
 .kebabBtn {
-  width: 2.6rem;
-  height: 2.6rem;
+  width: 1.9rem;
+  height: 1.9rem;
+  margin-top: 0.1rem;
   border-radius: 50%;
   border: none;
-  background: var(--color-border-subtle);
+  background: var(--color-surface);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-fg);
+  color: var(--color-muted-fg);
   cursor: pointer;
 }
 
 .menu {
   position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
+  top: calc(100% + 6px);
+  right: 0;
   z-index: 6;
   width: 9.5rem;
   background: var(--color-bg);
@@ -329,23 +252,81 @@
   color: var(--color-danger-fg);
 }
 
+/* Pinned to the bottom of the card, always in the same place, so marking a
+   step done doesn't shift this button around the way it used to when it
+   lived inside whichever row happened to be current. */
+.doneBtnWrap {
+  margin-top: 0.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
 .doneBtn {
-  flex: 1;
-  min-width: 0;
-  height: 2.6rem;
+  width: 100%;
+  height: 2.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
   border: none;
   border-radius: 999px;
-  padding: 0 1.1rem;
   font: inherit;
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   font-weight: 700;
   cursor: pointer;
   background: var(--blue-400);
   color: var(--btn-primary-fg);
+}
+
+/* The receding "wheel" of upcoming tasks below the current card — each
+   depth shrinks and tilts back via the .stage's perspective. Deliberately
+   NOT using `opacity` on these: opacity fades the background too, which lets
+   whatever's behind show through and defeats the "covered by the card in
+   front" look. Instead the background stays fully opaque (so z-index +
+   negative margin overlap genuinely occludes the card behind it) and only
+   the text color fades with depth. */
+.peek {
+  transform-origin: top center;
+  text-align: left;
+  padding: 1rem 1.4rem 1.2rem;
+  pointer-events: none;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-bg);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.peek .taskTitle {
+  font-size: 1.05rem;
+}
+
+.peek1 {
+  transform: rotateX(28deg) scale(0.93);
+  z-index: 3;
+  margin-top: -0.4rem;
+}
+
+.peek2 {
+  transform: rotateX(40deg) scale(0.86);
+  z-index: 2;
+  margin-top: -0.8rem;
+  background: var(--color-surface);
+}
+
+.peek2 .taskTitle,
+.peek2 .taskMeta {
+  color: var(--color-muted-fg);
+}
+
+.peek3 {
+  transform: rotateX(48deg) scale(0.8);
+  z-index: 1;
+  margin-top: -1.5rem;
+  background: var(--color-surface);
+}
+
+.peek3 .taskTitle,
+.peek3 .taskMeta {
+  color: var(--color-muted);
 }
 
 .errorText {

@@ -53,11 +53,11 @@ function mergeTasks(prev: Task[], newTasks: Task[]): Task[] {
 export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
   const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [openMenuStepId, setOpenMenuStepId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useCloseOnOutside(menuRef, menuOpen, () => setMenuOpen(false));
+  useCloseOnOutside(menuRef, openMenuStepId !== null, () => setOpenMenuStepId(null));
 
   const tree = useMemo(() => buildTaskTree(tasks), [tasks]);
   const nextTaskResult = useMemo(() => findNextTask(tree), [tree]);
@@ -67,11 +67,7 @@ export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
     [tree, nextTask]
   );
 
-  const completedRoots = useMemo(() => tree.filter((t) => getTaskProgress(t) >= 1), [tree]);
   const activeRoots = useMemo(() => tree.filter((t) => getTaskProgress(t) < 1), [tree]);
-  const totalCount = tree.length;
-  const doneCount = completedRoots.length;
-  const progress = totalCount > 0 ? doneCount / totalCount : 0;
 
   const rootTask: TaskNode | null = ancestors[0] ?? nextTask;
 
@@ -99,42 +95,39 @@ export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
     }
   }
 
-  async function handleGenerate() {
-    if (!nextTask) return;
-    setMenuOpen(false);
+  async function handleGenerate(stepId: string) {
+    setOpenMenuStepId(null);
     setError(null);
     try {
-      const generated = await breakdownTask(nextTask.id);
+      const generated = await breakdownTask(stepId);
       setTasks((prev) => [...prev, ...generated]);
     } catch {
       setError("Couldn't generate subtasks. Try again.");
     }
   }
 
-  async function handleDelete() {
-    if (!nextTask) return;
-    setMenuOpen(false);
+  async function handleDelete(step: TaskNode) {
+    setOpenMenuStepId(null);
     setError(null);
     try {
-      await deleteTask(nextTask.id);
+      await deleteTask(step.id);
       const idsToRemove = new Set<string>();
       const collect = (node: TaskNode) => {
         idsToRemove.add(node.id);
         node.subtasks.forEach(collect);
       };
-      collect(nextTask);
+      collect(step);
       setTasks((prev) => prev.filter((t) => !idsToRemove.has(t.id)));
     } catch {
       setError("Couldn't delete that step. Try again.");
     }
   }
 
-  const dayName = new Date().toLocaleDateString(undefined, { weekday: "long" });
-
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <span className={styles.tag}>Focus mode</span>
+        <div />
+        <span className={styles.headerTitle}>Focus mode</span>
         <button
           type="button"
           className={styles.closeBtn}
@@ -145,43 +138,11 @@ export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
         </button>
       </div>
 
-      <div className={styles.body}>
-        <div className={styles.dayHead}>
-          <h1 className={styles.dayTitle}>{dayName}</h1>
-          {totalCount > 0 && (
-            <>
-              <p className={styles.daySubtitle}>
-                {doneCount} of {totalCount} tasks completed
-              </p>
-              <div className={styles.miniTrack}>
-                <div className={styles.miniFill} style={{ width: `${Math.round(progress * 100)}%` }} />
-              </div>
-            </>
-          )}
-        </div>
-
+      <div className={styles.stage}>
         {!nextTask || !rootTask ? (
           <p className={styles.empty}>Nothing left! Add a task to get started.</p>
         ) : (
-          <div className={styles.stackWrap}>
-            {completedRoots.map((root) => (
-              <div key={root.id} className={`${styles.taskCard} ${styles.past}`}>
-                <p className={styles.pastTitle}>{root.title}</p>
-                <span className={styles.doneDotSmall}>
-                  <svg width="9" height="9" viewBox="0 0 16 16" aria-hidden="true">
-                    <path
-                      d="M3 8.5 L6.5 12 L13 4.5"
-                      stroke="currentColor"
-                      strokeWidth="2.4"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-              </div>
-            ))}
-
+          <>
             <div className={`${styles.taskCard} ${styles.current}`}>
               {/* When the root task IS the current step (a leaf task with no
                   subtasks, or one whose subtasks are all already done), the hero
@@ -199,117 +160,120 @@ export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
                 const isLast = i === siblings.length - 1;
                 const isCurrent = step.id === nextTask.id;
                 const isDone = !isCurrent && getTaskProgress(step) >= 1;
-
-                if (isCurrent) {
-                  return (
-                    <div key={step.id} className={styles.tlRow}>
-                      <div className={styles.tlRail}>
-                        <span className={`${styles.tlDot} ${styles.tlDotCurrent}`} />
-                        {!isLast && <span className={styles.tlLine} />}
-                      </div>
-                      <div className={styles.tlBody}>
-                        <div className={styles.heroRow}>
-                          <p className={styles.heroTitle}>{step.title}</p>
-                          <div className={styles.heroActions}>
-                            <div className={styles.kebabWrap} ref={menuRef}>
-                              <button
-                                type="button"
-                                className={styles.kebabBtn}
-                                aria-label="More actions"
-                                aria-haspopup="menu"
-                                aria-expanded={menuOpen}
-                                onClick={() => setMenuOpen((v) => !v)}
-                              >
-                                <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-                                  <circle cx="3" cy="8" r="1.4" fill="currentColor" />
-                                  <circle cx="8" cy="8" r="1.4" fill="currentColor" />
-                                  <circle cx="13" cy="8" r="1.4" fill="currentColor" />
-                                </svg>
-                              </button>
-                              {menuOpen && (
-                                <div className={styles.menu} role="menu">
-                                  <Link
-                                    href={`/tasks/new?parent=${step.id}`}
-                                    className={styles.menuItem}
-                                    role="menuitem"
-                                  >
-                                    <PlusIcon size={12} />
-                                    Add subtask
-                                  </Link>
-                                  <button
-                                    type="button"
-                                    className={styles.menuItem}
-                                    role="menuitem"
-                                    onClick={handleGenerate}
-                                  >
-                                    <SparkleIcon size={12} />
-                                    Generate
-                                  </button>
-                                  <div className={styles.menuDivider} />
-                                  <button
-                                    type="button"
-                                    className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                                    role="menuitem"
-                                    onClick={handleDelete}
-                                  >
-                                    <TrashIcon size={12} />
-                                    Delete
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                            <button type="button" className={styles.doneBtn} onClick={handleMarkDone}>
-                              <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-                                <path
-                                  d="M3 8.5 L6.5 12 L13 4.5"
-                                  stroke="currentColor"
-                                  strokeWidth="2.4"
-                                  fill="none"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                              Mark as done
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
+                const menuOpen = openMenuStepId === step.id;
 
                 return (
                   <div key={step.id} className={styles.tlRow}>
                     <div className={styles.tlRail}>
-                      <span className={`${styles.tlDot} ${isDone ? styles.tlDotDone : ""}`} />
+                      <span
+                        className={`${styles.tlDot} ${
+                          isCurrent ? styles.tlDotCurrent : isDone ? styles.tlDotDone : ""
+                        }`}
+                      />
                       {!isLast && <span className={styles.tlLine} />}
                     </div>
-                    <div className={`${styles.tlBody} ${isDone ? styles.tlBodyDone : styles.tlBodyUpcoming}`}>
-                      <p className={styles.subTitle}>{step.title}</p>
+                    <div
+                      className={`${styles.tlBody} ${
+                        isDone ? styles.tlBodyDone : isCurrent ? styles.tlBodyCurrent : styles.tlBodyUpcoming
+                      }`}
+                    >
+                      <div className={styles.tlRowContent}>
+                        <p className={styles.subTitle}>{step.title}</p>
+                        {!isDone && (
+                          <div className={styles.kebabWrap} ref={menuOpen ? menuRef : undefined}>
+                            <button
+                              type="button"
+                              className={styles.kebabBtn}
+                              aria-label={`More actions for ${step.title}`}
+                              aria-haspopup="menu"
+                              aria-expanded={menuOpen}
+                              onClick={() => setOpenMenuStepId((v) => (v === step.id ? null : step.id))}
+                            >
+                              <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true">
+                                <circle cx="3" cy="8" r="1.4" fill="currentColor" />
+                                <circle cx="8" cy="8" r="1.4" fill="currentColor" />
+                                <circle cx="13" cy="8" r="1.4" fill="currentColor" />
+                              </svg>
+                            </button>
+                            {menuOpen && (
+                              <div className={styles.menu} role="menu">
+                                <Link
+                                  href={`/tasks/new?parent=${step.id}`}
+                                  className={styles.menuItem}
+                                  role="menuitem"
+                                >
+                                  <PlusIcon size={12} />
+                                  Add subtask
+                                </Link>
+                                <button
+                                  type="button"
+                                  className={styles.menuItem}
+                                  role="menuitem"
+                                  onClick={() => handleGenerate(step.id)}
+                                >
+                                  <SparkleIcon size={12} />
+                                  Generate
+                                </button>
+                                <div className={styles.menuDivider} />
+                                <button
+                                  type="button"
+                                  className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                                  role="menuitem"
+                                  onClick={() => handleDelete(step)}
+                                >
+                                  <TrashIcon size={12} />
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
               })}
+
+              <div className={styles.doneBtnWrap}>
+                <button type="button" className={styles.doneBtn} onClick={handleMarkDone}>
+                  <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                    <path
+                      d="M3 8.5 L6.5 12 L13 4.5"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Mark as done
+                </button>
+              </div>
             </div>
 
-            {upcomingRoots.map((root) => {
-              const nextInRoot = findNextTask([root])?.task ?? null;
+            {/* A receding "wheel" of upcoming tasks — each step further back
+                shrinks and tucks behind the one in front of it. Capped at 3:
+                each card overlaps (and is covered by) the previous one via
+                negative margins, so rendering more than 3 would just pile
+                them up on top of each other with no visual payoff. */}
+            {upcomingRoots.slice(0, 3).map((root, i) => {
               const rootDoneCount = root.subtasks.filter((s) => getTaskProgress(s) >= 1).length;
+              const depth = i + 1;
               return (
-                <div key={root.id} className={`${styles.taskCard} ${styles.upcoming}`}>
+                <div
+                  key={root.id}
+                  className={`${styles.taskCard} ${styles.peek} ${styles[`peek${depth}`]}`}
+                >
                   <p className={styles.taskTitle}>{root.title}</p>
                   {root.subtasks.length > 0 && (
                     <p className={styles.taskMeta}>
                       {rootDoneCount} of {root.subtasks.length} steps done
                     </p>
                   )}
-                  {nextInRoot && nextInRoot.id !== root.id && (
-                    <p className={styles.upcomingHint}>Next: {nextInRoot.title}</p>
-                  )}
                 </div>
               );
             })}
-          </div>
+          </>
         )}
 
         {error && <p className={styles.errorText}>{error}</p>}
