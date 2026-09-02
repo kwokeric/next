@@ -83,7 +83,20 @@
   background: var(--color-surface-hover);
 }
 
+/* Grid, not flex — a 3rd column that reserves its own 1fr share even with
+   nothing in it, so the label stays truly centered regardless of the
+   kebab's width, and align-items: center keeps the dots and the label text
+   on the same vertical center by construction rather than a guessed
+   offset. */
+.cardHeaderRow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: 0.5rem;
+}
+
 .label {
+  margin: 0;
   font-size: 0.75rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -91,10 +104,74 @@
   color: var(--color-muted);
 }
 
+.kebabWrap {
+  position: relative;
+  justify-self: end;
+}
+
+.kebabBtn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-muted-fg);
+  cursor: pointer;
+}
+
+.kebabBtn:hover,
+.kebabBtn:active {
+  background: var(--color-surface-hover);
+  color: var(--color-fg);
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 6;
+  width: 9.5rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0.65rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+  padding: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: none;
+  background: none;
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--color-fg);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+}
+
+.menuItem:hover,
+.menuItem:active {
+  background: var(--color-surface-hover);
+}
+
+/* flex-end, not center: once the title wraps past one line, Done should
+   stay anchored to the last line instead of floating in the vertical
+   middle of the whole (possibly multi-line) title block. */
 .taskRow {
   margin-top: 0.75rem;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 0.75rem;
 }
@@ -108,15 +185,22 @@
 }
 
 .breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
   font-size: 0.75rem;
   color: var(--color-muted);
   text-align: left;
-  margin-bottom: 0.125rem;
+  margin: 0 0 0.125rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.breadcrumb svg {
+  flex-shrink: 0;
 }
 
 .breadcrumbText {
-  display: block;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -134,40 +218,26 @@
 }
 
 /* Always visible — no hover affordances, since this is a mobile-first UI. */
-.checkButton,
-.plusButton {
+.doneButton {
   flex-shrink: 0;
-  width: 2.5rem;
-  height: 2.5rem;
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 1.25rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.checkButton {
+  gap: 0.35rem;
+  height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 999px;
   border: none;
   background: var(--blue-300);
   color: #ffffff;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.checkButton:hover,
-.checkButton:active {
+.doneButton:hover,
+.doneButton:active {
   background: var(--green-600);
-}
-
-.plusButton {
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-fg);
-}
-
-.plusButton:hover,
-.plusButton:active {
-  background: var(--color-surface-hover);
 }
 
 .empty {

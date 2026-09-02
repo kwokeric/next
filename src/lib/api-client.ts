@@ -1,8 +1,18 @@
 import type { Task, TimeOfDay } from "@prisma/client";
 
+// Task fields Prisma types as Date — plain res.json() leaves these as ISO
+// strings instead, which crashes anything downstream expecting a real Date
+// (e.g. task-tree's isOnOrBefore calling .getUTCFullYear()) the moment a
+// task carrying one of these round-trips through an API call and gets
+// merged into client state.
+const DATE_FIELDS = new Set(["dueDate", "dueTime", "scheduledFor", "scheduledTime", "createdAt", "updatedAt"]);
+
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  return JSON.parse(text, (key, value) =>
+    DATE_FIELDS.has(key) && typeof value === "string" ? new Date(value) : value
+  ) as T;
 }
 
 export function createTask(
