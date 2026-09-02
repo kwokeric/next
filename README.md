@@ -14,13 +14,14 @@ instead of a wall of to-dos.
 
 <table>
   <tr>
-    <td width="50%">
-      <strong>Today's list, grouped by time of day</strong><br>
+    <td width="33%">
       <img src="./screenshot-list.PNG" width="100%">
     </td>
-    <td width="50%">
-      <strong>Creating a task, with optional scheduling</strong><br>
+    <td width="33%">
       <img src="./screenshot-create.PNG" width="100%">
+    </td>
+    <td width="33%">
+      <img src="./screenshot-focus.PNG" width="100%">
     </td>
   </tr>
 </table>
@@ -41,7 +42,9 @@ instead of a wall of to-dos.
 - `src/lib/anthropic.ts` — Claude API call for task breakdown
 - `src/app/api/**` — REST-ish route handlers (projects, tasks, reorder, breakdown)
 - `src/app/tasks/new/page.tsx` — the full-screen create-task route
+- `src/app/focus/page.tsx` — the full-screen focus-mode route
 - `src/components/TaskApp.tsx` — client-side state + orchestration
 - `src/components/TaskRow.tsx` — recursive task tree row
 - `src/components/NextActionCard.tsx` — the "Next Action" surface
 - `src/components/CreateTaskPage.tsx` — task creation, with subtasks and optional scheduling
+- `src/components/FocusMode.tsx` — one task, one step at a time

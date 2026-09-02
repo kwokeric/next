@@ -5,6 +5,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: #eceae4;
 }
 
 /* Grid, not flex — a 3rd column that reserves its 1fr share even with
@@ -19,7 +20,7 @@
   border-bottom: 1px solid var(--color-border-subtle);
   position: sticky;
   top: 0;
-  background: var(--color-bg);
+  background: #eceae4;
   z-index: 10;
 }
 
@@ -36,11 +37,11 @@
   height: 1.9rem;
   border-radius: 50%;
   border: none;
-  background: var(--color-surface-hover);
+  background: #eceae4;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-muted-fg);
+  color: var(--color-muted);
   cursor: pointer;
 }
 
@@ -300,13 +301,13 @@
 }
 
 .peek1 {
-  transform: rotateX(28deg) scale(0.93);
+  transform: scale(0.93);
   z-index: 3;
   margin-top: -0.4rem;
 }
 
 .peek2 {
-  transform: rotateX(40deg) scale(0.86);
+  transform: scale(0.86);
   z-index: 2;
   margin-top: -0.8rem;
   background: var(--color-surface);
@@ -318,7 +319,7 @@
 }
 
 .peek3 {
-  transform: rotateX(48deg) scale(0.8);
+  transform: scale(0.8);
   z-index: 1;
   margin-top: -1.5rem;
   background: var(--color-surface);
