@@ -13,6 +13,7 @@
 }
 
 .row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -127,22 +128,24 @@
   transform: rotate(180deg);
 }
 
-/* Clipped to zero width at rest; swiping open grows it to fit both
-   buttons. The negative margin cancels out .row's gap while collapsed, so
-   the ring doesn't sit 8px further from the edge than a genuinely-last
-   child would — .actionsOpen restores it once there's something to space
-   out from. */
+/* Positioned out of flow so revealing it never reflows the title or ring —
+   it overlays the row's trailing edge instead of squeezing them. Clipped
+   to zero width at rest; swiping open grows it rightward-anchored, so it
+   slides in over whatever's there rather than shifting anything else. */
 .actions {
+  position: absolute;
+  top: 0;
+  right: 0.5rem;
+  bottom: 0;
+  z-index: 1;
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
   overflow: hidden;
-  flex-shrink: 0;
   width: 0;
-  margin-left: -0.5rem;
+  background: var(--color-bg);
   transition: width 0.2s ease;
 }
 
 .actionsOpen {
-  width: 4.5rem;
-  margin-left: 0;
+  width: 3.75rem;
 }

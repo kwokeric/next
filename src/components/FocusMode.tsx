@@ -156,6 +156,7 @@ export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
                 </div>
               )}
 
+              <div className={styles.tlScroll}>
               {siblings.map((step, i) => {
                 const isLast = i === siblings.length - 1;
                 const isCurrent = step.id === nextTask.id;
@@ -233,6 +234,7 @@ export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
                   </div>
                 );
               })}
+              </div>
 
               <div className={styles.doneBtnWrap}>
                 <button type="button" className={styles.doneBtn} onClick={handleMarkDone}>

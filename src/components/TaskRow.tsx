@@ -186,7 +186,7 @@ export function TaskRow({
             className={styles.editButton}
             aria-label="Edit task"
           >
-            <EditIcon size={2} />
+            <EditIcon size={20} />
           </button>
 
           <button

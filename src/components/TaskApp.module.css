@@ -4,7 +4,7 @@
   width: 100%;
   /* Extra bottom room so content can scroll clear of the fixed Next Step
      bar (see .nextStepBar). */
-  padding: 2.5rem 1rem 9rem;
+  padding: 1.5rem 1rem 9rem;
 }
 
 .title {
