@@ -1,0 +1,22 @@
+name: Reset demo data
+
+# Vercel's Hobby plan only allows cron jobs to run once a day, so this runs
+# from Actions instead — it's independent of hosting plan and can hit an
+# arbitrary cadence. Requires two repo secrets set under Settings > Secrets
+# and variables > Actions:
+#   APP_URL       the deployed app's origin, e.g. https://next-app.vercel.app
+#   RESET_SECRET  same value as the RESET_SECRET env var set on the host
+
+on:
+  schedule:
+    - cron: "0 */4 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call reset endpoint
+        run: |
+          curl -sf -X POST "${{ secrets.APP_URL }}/api/reset" \
+            -H "Authorization: Bearer ${{ secrets.RESET_SECRET }}"
