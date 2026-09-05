@@ -99,6 +99,14 @@ export function CreateTaskPage({
 
   const hasTitle = title.trim().length > 0;
 
+  // Cancel and Create both end by pushing back to "/" — that navigation runs
+  // async cleanup first (deleting a draft, or the create call itself) so it
+  // can't just be a <Link>. Warming the prefetch as soon as this page mounts
+  // means the shell for "/" is already cached by the time either fires.
+  useEffect(() => {
+    router.prefetch("/");
+  }, [router]);
+
   useCloseOnOutside(todRef, todOpen, () => setTodOpen(false));
 
   // What the time-of-day dropdown should show: an explicit bucket pick, or

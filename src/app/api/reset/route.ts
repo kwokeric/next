@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateDefaultProject } from "@/lib/project";
 import { seedDemoTasks } from "@/lib/demo-data";
@@ -23,5 +24,6 @@ export async function POST(request: Request) {
   await prisma.task.deleteMany({ where: { projectId: project.id } });
   await seedDemoTasks(prisma, project.id);
 
+  revalidateTag("tasks", { expire: 0 });
   return NextResponse.json({ ok: true, resetAt: new Date().toISOString() });
 }

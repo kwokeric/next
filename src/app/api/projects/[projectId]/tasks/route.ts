@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { keyForAppend } from "@/lib/order";
 
@@ -51,5 +52,6 @@ export async function POST(
     },
   });
 
+  revalidateTag("tasks", { expire: 0 });
   return NextResponse.json(task, { status: 201 });
 }

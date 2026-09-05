@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { keyForMove } from "@/lib/order";
 
@@ -26,5 +27,6 @@ export async function PATCH(
     },
   });
 
+  revalidateTag("tasks", { expire: 0 });
   return NextResponse.json(task);
 }

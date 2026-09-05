@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Task } from "@prisma/client";
 import {
@@ -51,7 +50,6 @@ function mergeTasks(prev: Task[], newTasks: Task[]): Task[] {
 }
 
 export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
-  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [openMenuStepId, setOpenMenuStepId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -128,14 +126,9 @@ export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
       <div className={styles.header}>
         <div />
         <span className={styles.headerTitle}>Focus mode</span>
-        <button
-          type="button"
-          className={styles.closeBtn}
-          onClick={() => router.push("/")}
-          aria-label="Close focus mode"
-        >
+        <Link href="/" className={styles.closeBtn} aria-label="Close focus mode">
           <DeleteIcon size={14} />
-        </button>
+        </Link>
       </div>
 
       <div className={styles.stage}>

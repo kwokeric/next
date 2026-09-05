@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { generateSubtasks } from "@/lib/anthropic";
 import { keyForAppend } from "@/lib/order";
@@ -40,5 +41,6 @@ export async function POST(
     orderBy: { order: "asc" },
   });
 
+  revalidateTag("tasks", { expire: 0 });
   return NextResponse.json(created, { status: 201 });
 }

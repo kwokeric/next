@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { TaskStatus, type Task } from "@prisma/client";
 
@@ -96,6 +97,7 @@ export async function PATCH(
     await cascadeParentStatus(task.parentTaskId, changed);
   }
 
+  revalidateTag("tasks", { expire: 0 });
   return NextResponse.json(changed);
 }
 
@@ -106,5 +108,6 @@ export async function DELETE(
   const { taskId } = await params;
   // Subtasks cascade-delete via the self-relation's onDelete: Cascade.
   await prisma.task.delete({ where: { id: taskId } });
+  revalidateTag("tasks", { expire: 0 });
   return new NextResponse(null, { status: 204 });
 }
