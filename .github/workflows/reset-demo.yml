@@ -16,7 +16,25 @@ jobs:
   reset:
     runs-on: ubuntu-latest
     steps:
+      - name: Check required secrets are set
+        run: |
+          if [ -z "${{ secrets.APP_URL }}" ]; then
+            echo "::error::APP_URL secret is not set (Settings > Secrets and variables > Actions). It must be the full deployed origin, e.g. https://next-app.vercel.app — no trailing slash."
+            exit 1
+          fi
+          case "${{ secrets.APP_URL }}" in
+            http://*|https://*) ;;
+            *)
+              echo "::error::APP_URL secret ('${{ secrets.APP_URL }}') doesn't start with http:// or https:// — that's why curl reports a malformed URL (exit code 3)."
+              exit 1
+              ;;
+          esac
+          if [ -z "${{ secrets.RESET_SECRET }}" ]; then
+            echo "::error::RESET_SECRET secret is not set (Settings > Secrets and variables > Actions). It must match the RESET_SECRET env var configured on the host."
+            exit 1
+          fi
+
       - name: Call reset endpoint
         run: |
-          curl -sf -X POST "${{ secrets.APP_URL }}/api/reset" \
+          curl -sS -f -X POST "${{ secrets.APP_URL }}/api/reset" \
             -H "Authorization: Bearer ${{ secrets.RESET_SECRET }}"
