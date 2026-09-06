@@ -96,6 +96,7 @@ export function CreateTaskPage({
   const [error, setError] = useState<string | null>(null);
   const [todOpen, setTodOpen] = useState(false);
   const todRef = useRef<HTMLDivElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   const hasTitle = title.trim().length > 0;
 
@@ -106,6 +107,15 @@ export function CreateTaskPage({
   useEffect(() => {
     router.prefetch("/");
   }, [router]);
+
+  // autoFocus alone is unreliable on mobile browsers (often suppressed to
+  // avoid popping the keyboard on navigation) and doesn't select existing
+  // text — focusing and selecting explicitly on mount is more robust and
+  // means typing immediately replaces anything already there.
+  useEffect(() => {
+    titleInputRef.current?.focus();
+    titleInputRef.current?.select();
+  }, []);
 
   useCloseOnOutside(todRef, todOpen, () => setTodOpen(false));
 
@@ -283,11 +293,11 @@ export function CreateTaskPage({
         )}
 
         <input
+          ref={titleInputRef}
           className={styles.titleInput}
           placeholder="Task name"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          autoFocus
         />
 
         <div className={styles.fieldBlock}>

@@ -1,8 +1,16 @@
+/* height (not min-height) + overflow: hidden so this page can never scroll
+   itself, on any screen — mobile browsers' address bar show/hide can make
+   100vh taller than the actual visible area, which is exactly the kind of
+   sliver that used to make even a blank page register as scrollable;
+   100dvh tracks the real visible viewport instead. */
 .page {
   margin: 0 auto;
   width: 100vw;
   max-width: 42rem;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
   display: flex;
   flex-direction: column;
 }
@@ -39,8 +47,14 @@
   font-family: var(--font-belgiano-serif), serif;
 }
 
+/* min-height: 0 overrides the flex default of min-height: auto, which
+   otherwise refuses to let a flex item shrink below its content size —
+   without it, long content (many subtasks) would grow .page past the
+   viewport instead of scrolling in place here. */
 .body {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 1.5rem 1rem 2rem;
   display: flex;
   flex-direction: column;
