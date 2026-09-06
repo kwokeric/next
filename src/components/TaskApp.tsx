@@ -5,14 +5,12 @@ import Link from "next/link";
 import type { Task, TimeOfDay } from "@prisma/client";
 import {
   buildTaskTree,
-  findAncestorPath,
   findNextTask,
   getProjectProgress,
   getTaskProgress,
   type TaskNode,
 } from "@/lib/task-tree";
 import { updateTask, deleteTask } from "@/lib/api-client";
-import { NextActionCard } from "./NextActionCard";
 import { TaskRow } from "./TaskRow";
 import { PlusIcon } from "./icons/PlusIcon";
 import { ClockIcon } from "./icons/ClockIcon";
@@ -40,10 +38,6 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
   const tree = useMemo(() => buildTaskTree(tasks), [tasks]);
   const nextTaskResult = useMemo(() => findNextTask(tree), [tree]);
   const nextTask = nextTaskResult?.task ?? null;
-  const nextTaskAncestors = useMemo(
-    () => (nextTask ? findAncestorPath(tree, nextTask.id) ?? [] : []),
-    [tree, nextTask]
-  );
   const projectProgress = useMemo(() => getProjectProgress(tree), [tree]);
 
   // Newly completed tasks stay in their section for a bit to allow time for
@@ -278,16 +272,6 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
           )}
         </>
       )}
-
-      <div className={styles.nextStepBar}>
-        <div className={styles.nextStepBarInner}>
-          <NextActionCard
-            task={nextTask}
-            ancestors={nextTaskAncestors}
-            onComplete={handleToggleStatus}
-          />
-        </div>
-      </div>
     </div>
   );
 }

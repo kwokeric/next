@@ -38,21 +38,6 @@
   font-family: var(--font-belgiano-serif), serif;
 }
 
-.closeBtn {
-  justify-self: end;
-  flex-shrink: 0;
-  width: 1.9rem;
-  height: 1.9rem;
-  border-radius: 50%;
-  border: none;
-  background: #eceae4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-muted);
-  cursor: pointer;
-}
-
 /* Fills the rest of the viewport and centers the current-task card in it —
    the whole point of "focus" mode is that one card, not a scrolling list.
    min-height: 0 overrides the flex default of min-height: auto, which
@@ -66,7 +51,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 1.25rem;
+  /* Extra bottom padding biases the centered card upward, clear of the
+     floating BottomNav pill overlaid on top of this page. */
+  padding: 1.5rem 1.25rem calc(1.5rem + 4.5rem);
   perspective: 900px;
 }
 

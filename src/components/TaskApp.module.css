@@ -2,9 +2,9 @@
   margin: 0 auto;
   max-width: 42rem;
   width: 100%;
-  /* Extra bottom room so content can scroll clear of the fixed Next Step
-     bar (see .nextStepBar). */
-  padding: 1.5rem 1rem 9rem;
+  /* Extra bottom room so the last row can scroll clear of the floating
+     BottomNav pill. */
+  padding: 1.5rem 1rem 6rem;
 }
 
 .title {
@@ -137,24 +137,4 @@
 .addTaskButton:active {
   background: var(--color-surface-hover);
   color: var(--color-fg);
-}
-
-.nextStepBar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent 0,
-    color-mix(in srgb, var(--color-bg) 60%, transparent) 3rem,
-    var(--color-bg) 3rem
-  );
-  padding: 3rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
-  z-index: 40;
-}
-
-.nextStepBarInner {
-  max-width: 42rem;
-  margin: 0 auto;
 }

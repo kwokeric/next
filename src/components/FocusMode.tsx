@@ -11,7 +11,6 @@ import {
   type TaskNode,
 } from "@/lib/task-tree";
 import { updateTask, deleteTask, breakdownTask } from "@/lib/api-client";
-import { DeleteIcon } from "./icons/DeleteIcon";
 import { PlusIcon } from "./icons/PlusIcon";
 import { SparkleIcon } from "./icons/SparkleIcon";
 import { TrashIcon } from "./icons/TrashIcon";
@@ -126,9 +125,7 @@ export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
       <div className={styles.header}>
         <div />
         <span className={styles.headerTitle}>Focus mode</span>
-        <Link href="/" className={styles.closeBtn} aria-label="Close focus mode">
-          <DeleteIcon size={14} />
-        </Link>
+        <div />
       </div>
 
       <div className={styles.stage}>

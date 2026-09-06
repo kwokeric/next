@@ -1,0 +1,50 @@
+/* Floating pill nav, not a full-width bar — matches the app's existing
+   rounded-pill language (chips, buttons) instead of a hard-edged tab bar.
+   Fixed at the page level so it overlays every route's own content
+   regardless of that route's scroll/overflow setup. */
+.wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  padding: 0 1rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+  /* Only the pill itself should catch clicks — the transparent margin
+     around it must stay click-through. */
+  pointer-events: none;
+}
+
+.pill {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  max-width: 22rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 999px;
+  padding: 0.4rem;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.16);
+}
+
+.item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.5rem;
+  border-radius: 999px;
+  color: var(--color-muted-fg);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.itemActive {
+  background: color-mix(in srgb, var(--blue-400) 16%, var(--color-bg));
+  color: var(--blue-400);
+}
