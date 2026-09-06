@@ -13,19 +13,12 @@ const SWIPE_THRESHOLD_PX = 80; // 5rem at the default 16px root
 export function TaskRow({
   task,
   depth,
-  isNextTask,
-  nextTaskId,
   onToggleStatus,
   onEdit,
   onDelete,
 }: {
   task: TaskNode;
   depth: number;
-  isNextTask: boolean;
-  // Threaded through the recursion below so nested rows at any depth can
-  // compute their own isNextTask — the next task is usually a subtask, not
-  // a root, since it's found via depth-first descent (see findNextTask).
-  nextTaskId: string | null;
   onToggleStatus: (task: TaskNode) => void;
   onEdit: (task: TaskNode, title: string) => void;
   onDelete: (task: TaskNode) => void;
@@ -173,7 +166,6 @@ export function TaskRow({
         <span className={styles.ringSlot}>
           <ProgressRing
             handleToggleStatus={() => onToggleStatus(task)}
-            isNextTask={isNextTask}
             progress={getTaskProgress(task)}
             size={24}
             showLabel={false}
@@ -206,8 +198,6 @@ export function TaskRow({
               key={subtask.id}
               task={subtask}
               depth={depth + 1}
-              isNextTask={subtask.id === nextTaskId}
-              nextTaskId={nextTaskId}
               onToggleStatus={onToggleStatus}
               onDelete={onDelete}
               onEdit={onEdit}

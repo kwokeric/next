@@ -6,6 +6,7 @@ import type { Task, TimeOfDay } from "@prisma/client";
 import { createTask, updateTask, deleteTask, breakdownTask } from "@/lib/api-client";
 import { autogrow } from "@/lib/autogrow";
 import { SparkleIcon } from "./icons/SparkleIcon";
+import { BackIcon } from "./icons/BackIcon";
 import { PlusIcon } from "./icons/PlusIcon";
 import { ClockIcon } from "./icons/ClockIcon";
 import { SunriseIcon } from "./icons/SunriseIcon";
@@ -71,10 +72,12 @@ export function CreateTaskPage({
   projectId,
   parentTask,
   initialTimeOfDay,
+  showBackCaret = false,
 }: {
   projectId: string;
   parentTask: Task | null;
   initialTimeOfDay: TimeOfDay | null;
+  showBackCaret?: boolean;
 }) {
   const router = useRouter();
 
@@ -260,10 +263,32 @@ export function CreateTaskPage({
     }
   }
 
+  async function handleCancel() {
+    if (draftTaskId) {
+      try {
+        await deleteTask(draftTaskId);
+      } catch {
+        // Best-effort cleanup — nothing the user can do about it here.
+      }
+    }
+    router.push("/");
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <div />
+        {showBackCaret ? (
+          <button
+            type="button"
+            className={styles.headerLink}
+            onClick={handleCancel}
+            aria-label="Back"
+          >
+            <BackIcon size={20} />
+          </button>
+        ) : (
+          <div />
+        )}
         <span className={styles.headerTitle}>{parentTask ? "Add subtask" : "New task"}</span>
         <div />
       </div>

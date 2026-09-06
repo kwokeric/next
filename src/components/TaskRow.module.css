@@ -17,7 +17,7 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem;
   /* Swipe-to-reveal reads raw pointer coordinates — these stop a
      click-drag from being hijacked into a native text-selection/drag
      gesture, which would eat the pointerup before our handler sees it. */

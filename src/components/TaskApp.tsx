@@ -5,7 +5,6 @@ import Link from "next/link";
 import type { Task, TimeOfDay } from "@prisma/client";
 import {
   buildTaskTree,
-  findNextTask,
   getProjectProgress,
   getTaskProgress,
   type TaskNode,
@@ -36,8 +35,6 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   const tree = useMemo(() => buildTaskTree(tasks), [tasks]);
-  const nextTaskResult = useMemo(() => findNextTask(tree), [tree]);
-  const nextTask = nextTaskResult?.task ?? null;
   const projectProgress = useMemo(() => getProjectProgress(tree), [tree]);
 
   // Newly completed tasks stay in their section for a bit to allow time for
@@ -212,8 +209,6 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
                     key={task.id}
                     task={task}
                     depth={0}
-                    isNextTask={task.id === nextTask?.id}
-                    nextTaskId={nextTask?.id ?? null}
                     onToggleStatus={handleToggleStatus}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
@@ -261,8 +256,6 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
                 key={task.id}
                 task={task}
                 depth={0}
-                isNextTask={task.id === nextTask?.id}
-                nextTaskId={nextTask?.id ?? null}
                 onToggleStatus={handleToggleStatus}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
