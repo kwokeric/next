@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Suspense } from "react";
 import { BottomNav } from "@/components/BottomNav";
 import "./globals.css";
 
@@ -30,7 +31,9 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${belgianoSerif.variable}`}>
       <body>
         {children}
-        <BottomNav />
+        <Suspense fallback={null}>
+          <BottomNav />
+        </Suspense>
       </body>
     </html>
   );

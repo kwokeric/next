@@ -29,7 +29,7 @@ export default async function NewTaskPage({
       projectId={project.id}
       parentTask={parentTask}
       initialTimeOfDay={initialTimeOfDay}
-      showBackCaret={Boolean(timeOfDay)}
+      showBackCaret={Boolean(timeOfDay) || Boolean(parent)}
     />
   );
 }

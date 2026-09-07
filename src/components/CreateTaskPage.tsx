@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Task, TimeOfDay } from "@prisma/client";
 import { createTask, updateTask, deleteTask, breakdownTask } from "@/lib/api-client";
@@ -71,26 +72,45 @@ function useCloseOnOutside(
 export function CreateTaskPage({
   projectId,
   parentTask,
+  editingTask = null,
+  initialSubtasks = [],
   initialTimeOfDay,
+  initialScheduledFor = null,
+  initialExactTime = null,
   showBackCaret = false,
 }: {
   projectId: string;
   parentTask: Task | null;
+  editingTask?: Task | null;
+  initialSubtasks?: Task[];
   initialTimeOfDay: TimeOfDay | null;
+  initialScheduledFor?: string | null;
+  initialExactTime?: string | null;
   showBackCaret?: boolean;
 }) {
   const router = useRouter();
 
-  const [title, setTitle] = useState("");
-  const [dateChoice, setDateChoice] = useState<DateChoice>("");
-  const [customDate, setCustomDate] = useState("");
-  const [timeChoice, setTimeChoice] = useState<TimeChoice>(
-    initialTimeOfDay ? (initialTimeOfDay.toLowerCase() as TimeChoice) : ""
-  );
-  const [exactTime, setExactTime] = useState("");
+  const initialDateChoice: DateChoice = !initialScheduledFor
+    ? ""
+    : initialScheduledFor === localDateString(0)
+      ? "today"
+      : initialScheduledFor === localDateString(1)
+        ? "tomorrow"
+        : "custom";
 
-  const [subtasks, setSubtasks] = useState<Task[]>([]);
-  const [draftTaskId, setDraftTaskId] = useState<string | null>(null);
+  const [title, setTitle] = useState(editingTask?.title ?? "");
+  const [dateChoice, setDateChoice] = useState<DateChoice>(initialDateChoice);
+  // Always seeded from the resolved date, not just for "custom" — so the
+  // picker visibly shows today's/tomorrow's actual date when one of those
+  // shortcuts is what's selected, instead of sitting blank.
+  const [customDate, setCustomDate] = useState(initialScheduledFor ?? "");
+  const [timeChoice, setTimeChoice] = useState<TimeChoice>(
+    initialExactTime ? "exact" : initialTimeOfDay ? (initialTimeOfDay.toLowerCase() as TimeChoice) : ""
+  );
+  const [exactTime, setExactTime] = useState(initialExactTime ?? "");
+
+  const [subtasks, setSubtasks] = useState<Task[]>(initialSubtasks);
+  const [draftTaskId, setDraftTaskId] = useState<string | null>(editingTask?.id ?? null);
   const [addingSubtask, setAddingSubtask] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -150,8 +170,11 @@ export function CreateTaskPage({
   }
 
   function toggleDateChoice(choice: Exclude<DateChoice, "" | "custom">) {
-    setCustomDate("");
-    setDateChoice((prev) => (prev === choice ? "" : choice));
+    const next = dateChoice === choice ? "" : choice;
+    setDateChoice(next);
+    // Fill the date field with the actual resolved date so it's visibly
+    // in sync with the Today/Tomorrow pick, not left blank.
+    setCustomDate(next === "today" ? localDateString(0) : next === "tomorrow" ? localDateString(1) : "");
   }
 
   function handleCustomDateChange(value: string) {
@@ -255,7 +278,11 @@ export function CreateTaskPage({
           scheduledTime: computeScheduledTime(),
         });
       }
-      router.push("/");
+      if (editingTask) {
+        router.back();
+      } else {
+        router.push("/");
+      }
       router.refresh();
     } catch {
       setError("Couldn't create the task. Try again.");
@@ -264,14 +291,21 @@ export function CreateTaskPage({
   }
 
   async function handleCancel() {
-    if (draftTaskId) {
+    // Only delete the draft if this page created it speculatively (the
+    // "add subtask"/"new task" flows) — editingTask means draftTaskId is a
+    // real, pre-existing task, which must never be deleted just because
+    // its editor was closed.
+    if (draftTaskId && !editingTask) {
       try {
         await deleteTask(draftTaskId);
       } catch {
         // Best-effort cleanup — nothing the user can do about it here.
       }
     }
-    router.push("/");
+    // Back to wherever this page was opened from (the list for the
+    // timeOfDay "+" entry point, Focus mode for the "Add subtask" one) —
+    // not always "/", since the caret means "back," not "home."
+    router.back();
   }
 
   return (
@@ -289,131 +323,155 @@ export function CreateTaskPage({
         ) : (
           <div />
         )}
-        <span className={styles.headerTitle}>{parentTask ? "Add subtask" : "New task"}</span>
+        <span className={styles.headerTitle}>
+          {editingTask ? "Edit task" : parentTask ? "Add subtask" : "New task"}
+        </span>
         <div />
       </div>
 
       <div className={styles.body}>
         {parentTask && (
-          <p className={styles.parentContext}>Subtask of &ldquo;{parentTask.title}&rdquo;</p>
+          <Link href={`/tasks/${parentTask.id}/edit`} className={styles.parentCard}>
+            <div className={styles.parentCardText}>
+              <span className={styles.parentCardEyebrow}>Adding to</span>
+              <span className={styles.parentCardTitle}>{parentTask.title}</span>
+            </div>
+            <svg
+              className={styles.parentCardArrow}
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </Link>
         )}
 
-        <input
-          ref={titleInputRef}
-          className={styles.titleInput}
-          placeholder="Task name"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
+        <div className={styles.fieldBlock}>
+          <label htmlFor="task-title" className={styles.fieldLabel}>
+            Task
+          </label>
+          <input
+            id="task-title"
+            ref={titleInputRef}
+            className={styles.titleInput}
+            placeholder="Enter task"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
 
         <div className={styles.fieldBlock}>
           <div className={styles.fieldLabel}>Date</div>
-          <div className={`${styles.chipRow} ${styles.chipRowNowrap}`}>
+          <div className={styles.pickerBar}>
             <input
               type="date"
-              className={`${styles.chip} ${styles.chipNeutral} ${styles.pillInput} ${
-                dateChoice === "custom" ? styles.chipSelected : ""
-              }`}
+              className={`${styles.pickerMain} ${dateChoice === "custom" ? styles.pickerMainFilled : ""}`}
               value={customDate}
               onChange={(e) => handleCustomDateChange(e.target.value)}
               aria-label="Pick a date"
             />
-            <button
-              type="button"
-              className={`${styles.chip} ${styles.chipNeutral} ${
-                dateChoice === "today" ? styles.chipSelected : ""
-              }`}
-              onClick={() => toggleDateChoice("today")}
-            >
-              Today
-            </button>
-            <button
-              type="button"
-              className={`${styles.chip} ${styles.chipNeutral} ${
-                dateChoice === "tomorrow" ? styles.chipSelected : ""
-              }`}
-              onClick={() => toggleDateChoice("tomorrow")}
-            >
-              Tomorrow
-            </button>
+            <span className={styles.pickerDivider} aria-hidden="true" />
+            <div className={styles.pickerAccessory}>
+              <button
+                type="button"
+                className={`${styles.pickerBtn} ${dateChoice === "today" ? styles.pickerBtnActive : ""}`}
+                onClick={() => toggleDateChoice("today")}
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                className={`${styles.pickerBtn} ${dateChoice === "tomorrow" ? styles.pickerBtnActive : ""}`}
+                onClick={() => toggleDateChoice("tomorrow")}
+              >
+                Tomorrow
+              </button>
+            </div>
           </div>
         </div>
 
         <div className={styles.fieldBlock}>
           <div className={styles.fieldLabel}>Time</div>
-          <div className={`${styles.chipRow} ${styles.timeRow}`}>
+          <div className={styles.pickerBar}>
             <input
               type="time"
               step={300}
-              className={`${styles.chip} ${styles.chipNeutral} ${styles.pillInput} ${
-                timeChoice === "exact" ? styles.chipSelected : ""
-              }`}
+              className={`${styles.pickerMain} ${timeChoice === "exact" ? styles.pickerMainFilled : ""}`}
               value={exactTime}
               onChange={(e) => handleExactTimeChange(e.target.value)}
               aria-label="Pick an exact time"
             />
 
-            <span className={styles.orLabel}>or</span>
+            <span className={styles.pickerDivider} aria-hidden="true" />
 
-            <div className={styles.dropdownWrapper} ref={todRef}>
-              <button
-                type="button"
-                className={`${styles.chip} ${styles.chipNeutral} ${styles.dropdownTrigger} ${
-                  effectiveTimeOfDay ? styles.chipSelected : ""
-                } ${todOpen ? styles.dropdownTriggerOpen : ""}`}
-                onClick={() => setTodOpen((v) => !v)}
-                aria-haspopup="listbox"
-                aria-expanded={todOpen}
-              >
-                <span className={styles.dropdownLabel}>
-                  {selectedTimeOfDayOption ? (
-                    <>
-                      {selectedTimeOfDayOption.icon}
-                      {selectedTimeOfDayOption.label}
-                    </>
-                  ) : (
-                    "Time of day"
-                  )}
-                </span>
-                <svg
-                  className={`${styles.dropdownCaret} ${todOpen ? styles.dropdownCaretOpen : ""}`}
-                  width="10"
-                  height="10"
-                  viewBox="0 0 10 10"
-                  aria-hidden="true"
+            <div className={styles.pickerAccessory}>
+              <div className={styles.dropdownWrapper} ref={todRef}>
+                <button
+                  type="button"
+                  className={`${styles.pickerBtn} ${
+                    effectiveTimeOfDay || todOpen ? styles.pickerBtnActive : ""
+                  }`}
+                  onClick={() => setTodOpen((v) => !v)}
+                  aria-haspopup="listbox"
+                  aria-expanded={todOpen}
                 >
-                  <path
-                    d="M2 3.5 L5 6.5 L8 3.5"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-              {todOpen && (
-                <div className={styles.dropdownPanel} role="listbox">
-                  {TIME_OF_DAY_OPTIONS.map((opt) => (
-                    <button
-                      type="button"
-                      key={opt.value}
-                      role="option"
-                      aria-selected={effectiveTimeOfDay === opt.value}
-                      className={`${styles.dropdownOption} ${
-                        effectiveTimeOfDay === opt.value ? styles.dropdownOptionSelected : ""
-                      }`}
-                      onClick={() => {
-                        handleTimeOfDaySelect(opt.value);
-                        setTodOpen(false);
-                      }}
-                    >
-                      {opt.icon}
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+                  <span className={styles.dropdownLabel}>
+                    {selectedTimeOfDayOption ? (
+                      <>
+                        {selectedTimeOfDayOption.icon}
+                        {selectedTimeOfDayOption.label}
+                      </>
+                    ) : (
+                      "Time of day"
+                    )}
+                  </span>
+                  <svg
+                    className={`${styles.dropdownCaret} ${todOpen ? styles.dropdownCaretOpen : ""}`}
+                    width="10"
+                    height="10"
+                    viewBox="0 0 10 10"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M2 3.5 L5 6.5 L8 3.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                {todOpen && (
+                  <div className={styles.dropdownPanel} role="listbox">
+                    {TIME_OF_DAY_OPTIONS.map((opt) => (
+                      <button
+                        type="button"
+                        key={opt.value}
+                        role="option"
+                        aria-selected={effectiveTimeOfDay === opt.value}
+                        className={`${styles.dropdownOption} ${
+                          effectiveTimeOfDay === opt.value ? styles.dropdownOptionSelected : ""
+                        }`}
+                        onClick={() => {
+                          handleTimeOfDaySelect(opt.value);
+                          setTodOpen(false);
+                        }}
+                      >
+                        {opt.icon}
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -519,7 +577,13 @@ export function CreateTaskPage({
           disabled={!hasTitle || isSubmitting}
           onClick={handleCreate}
         >
-          {isSubmitting ? "Creating…" : "Create task"}
+          {isSubmitting
+            ? editingTask
+              ? "Saving…"
+              : "Creating…"
+            : editingTask
+              ? "Save changes"
+              : "Create task"}
         </button>
       </div>
     </div>

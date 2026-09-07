@@ -65,22 +65,70 @@
   gap: 1.75rem;
 }
 
-.parentContext {
-  font-size: 0.875rem;
-  color: var(--color-muted-fg);
+/* A small preview of the parent task — tapping it opens the parent's own
+   edit page, instead of a plain "Subtask of ..." sentence. */
+.parentCard {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   margin: -0.75rem 0 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.85rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  text-decoration: none;
+  color: inherit;
 }
 
+.parentCardText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.parentCardEyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.parentCardTitle {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.parentCardArrow {
+  flex-shrink: 0;
+  color: var(--color-muted);
+}
+
+/* Same bordered/filled/rounded language as the date and time chips below,
+   so this reads as an input at a glance instead of looking like a plain
+   heading. */
 .titleInput {
-  border: none;
+  border: 1.5px solid var(--color-border-subtle);
+  border-radius: 1rem;
   outline: none;
-  background: transparent;
+  background: var(--color-surface);
   color: var(--color-fg);
   font: inherit;
   font-size: 1.5rem;
   font-weight: 600;
-  padding: 0;
+  padding: 0.7rem 0.9rem;
   width: 100%;
+}
+
+.titleInput:focus {
+  border-color: var(--blue-400);
 }
 
 .titleInput::placeholder {
@@ -101,37 +149,90 @@
   color: var(--color-muted-fg);
 }
 
-.chipRow {
+/* Date and time fields: one bordered/filled bar (.pickerBar) holding the
+   native picker (.pickerMain, flexible width) and a docked group of
+   quick-pick buttons (.pickerAccessory) separated by a hairline divider —
+   reads as a single input with shortcuts built in, rather than several
+   separate chips in a row. */
+.pickerBar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  align-items: stretch;
+  height: 2.75rem;
+  border: 1.5px solid var(--color-border-subtle);
+  border-radius: 1rem;
+  background: var(--color-surface);
 }
 
-.chipRowNowrap {
-  flex-wrap: nowrap;
-}
-
-/* Grid instead of flex here specifically: Chrome enforces a hard minimum
-   render width on <input type="time"> that flex's min-width: 0 doesn't
-   override, which threw the exact-time input and the dropdown out of
-   balance under flex's equal-share sizing. Grid's minmax(0, 1fr) tracks
-   hold both columns to the same width regardless. */
-.timeRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+.pickerMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
   align-items: center;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  padding: 0 0.85rem;
+  color-scheme: light dark;
+}
+
+.pickerMainFilled {
+  color: var(--color-fg);
+}
+
+.pickerDivider {
+  width: 1px;
+  align-self: center;
+  height: 1.5rem;
+  background: var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
+.pickerAccessory {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.35rem;
+  flex-shrink: 0;
+}
+
+.pickerBtn {
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 0.6rem;
+  border: none;
+  border-radius: 0.7rem;
+  background: none;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-muted-fg);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Soft tint instead of a solid fill — a filled button here read as too
+   heavy/dark for a quiet quick-pick shortcut. */
+.pickerBtnActive {
+  background: color-mix(in srgb, var(--blue-400) 16%, var(--color-bg));
+  color: var(--blue-400);
 }
 
 .chip {
   flex: 1;
   min-width: 0;
-  height: 2.25rem;
+  height: 2.75rem;
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1.5px solid transparent;
-  border-radius: 1rem;
+  border-radius: 2rem;
   padding: 0 0.75rem;
   font: inherit;
   font-size: 0.8125rem;
@@ -150,54 +251,12 @@
   color: var(--color-fg);
 }
 
-.pillInput {
-  font-family: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  color-scheme: light dark;
-}
-
-/* The date field's text and calendar icon are pinned to opposite edges
-   by default (the text part flex-grows to fill the input). Stopping it
-   from growing lets the .chip's own justify-content: center take over
-   and center the text+icon as one group instead. */
-.pillInput::-webkit-datetime-edit {
-  flex: none;
-}
-
-.orLabel {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-muted);
-  padding: 0 0.1rem;
-}
-
-/* Custom dropdown — used by the time-of-day field. A native <select>'s
-   open menu can't be restyled (browser chrome, not the page), so this is
-   a plain button + panel instead, letting the trigger's bottom corners
-   square off while open to read as one connected shape with the menu
-   under it. */
+/* Custom dropdown — used by the time-of-day field, docked inside
+   .pickerAccessory. A native <select>'s open menu can't be restyled
+   (browser chrome, not the page), so this is a plain button + floating
+   panel instead. */
 .dropdownWrapper {
   position: relative;
-  flex: 1;
-  min-width: 0;
-}
-
-.dropdownTrigger {
-  width: 100%;
-  justify-content: space-between;
-  gap: 0.4rem;
-}
-
-.dropdownTriggerOpen {
-  border-color: var(--blue-400);
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
 }
 
 .dropdownLabel {
@@ -219,19 +278,22 @@
   transform: rotate(180deg);
 }
 
+/* Hangs from the trigger's right edge rather than stretching full-width —
+   the trigger is now a small docked button, not a full-width chip, so the
+   panel floats free instead of squaring off to sit flush beneath it. */
 .dropdownPanel {
   position: absolute;
-  top: 100%;
-  left: 0;
+  top: calc(100% + 0.4rem);
   right: 0;
-  margin-top: -1.5px;
+  min-width: 11rem;
   box-sizing: border-box;
   max-height: 12rem;
   overflow-y: auto;
   background: var(--color-bg);
-  border: 1.5px solid var(--blue-400);
-  border-top: none;
-  border-radius: 0 0 1rem 1rem;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 1rem;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+  padding: 0.3rem;
   z-index: 20;
 }
 
@@ -246,7 +308,8 @@
   text-align: left;
   border: none;
   background: none;
-  padding: 0 0.75rem;
+  border-radius: 0.6rem;
+  padding: 0 0.6rem;
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -366,7 +429,7 @@
 .rotatingBorder {
   position: absolute;
   inset: 0;
-  border-radius: 1rem;
+  border-radius: 2rem;
   overflow: hidden;
   box-sizing: border-box;
   padding: 1.5px;
