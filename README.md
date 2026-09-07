@@ -42,9 +42,10 @@ instead of a wall of to-dos.
 - `src/lib/anthropic.ts` — Claude API call for task breakdown
 - `src/app/api/**` — REST-ish route handlers (projects, tasks, reorder, breakdown)
 - `src/app/tasks/new/page.tsx` — the full-screen create-task route
+- `src/app/tasks/[taskId]/edit/page.tsx` — the full-screen edit-task route
 - `src/app/focus/page.tsx` — the full-screen focus-mode route
 - `src/components/TaskApp.tsx` — client-side state + orchestration
 - `src/components/TaskRow.tsx` — recursive task tree row
-- `src/components/NextActionCard.tsx` — the "Next Action" surface
-- `src/components/CreateTaskPage.tsx` — task creation, with subtasks and optional scheduling
+- `src/components/BottomNav.tsx` — the floating Tasks/Create/Focus tab bar
+- `src/components/CreateTaskPage.tsx` — task creation and editing, with subtasks and optional scheduling
 - `src/components/FocusMode.tsx` — one task, one step at a time
