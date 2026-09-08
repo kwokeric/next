@@ -102,6 +102,7 @@
 
 .editButton {
   color: var(--color-muted);
+  text-decoration: none;
 }
 
 .editButton:hover,

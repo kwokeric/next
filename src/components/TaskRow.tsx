@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { getTaskProgress, type TaskNode } from "@/lib/task-tree";
 import { autogrow } from "@/lib/autogrow";
 import { ProgressRing } from "./ProgressRing";
@@ -72,12 +73,6 @@ export function TaskRow({
     inputRef.current = el;
     autogrow(el);
   }, []);
-
-  const onEditClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    setIsEditing(true);
-    inputRef.current?.focus();
-  }
 
   // Swipe left past the threshold reveals the add/delete buttons; swipe
   // right past it hides them again. Only the final distance matters — the
@@ -173,13 +168,13 @@ export function TaskRow({
         </span>
 
         <div className={`${styles.actions} ${swiped ? styles.actionsOpen : ""}`}>
-          <button
-            onClick={onEditClick}
+          <Link
+            href={`/tasks/${task.id}/edit`}
             className={styles.editButton}
             aria-label="Edit task"
           >
             <EditIcon size={20} />
-          </button>
+          </Link>
 
           <button
             onClick={() => onDelete(task)}

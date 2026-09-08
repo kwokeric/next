@@ -59,3 +59,17 @@ export function breakdownTask(taskId: string): Promise<Task[]> {
     json<Task[]>
   );
 }
+
+// prevOrder/nextOrder are the new neighbors' `order` keys (either may be
+// null for "moved to the start/end") — the server computes the key between
+// them and reparents the task if parentTaskId differs from its current one.
+export function reorderTask(
+  taskId: string,
+  input: { parentTaskId: string | null; prevOrder: string | null; nextOrder: string | null }
+): Promise<Task> {
+  return fetch(`/api/tasks/${taskId}/reorder`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  }).then(json<Task>);
+}

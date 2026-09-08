@@ -223,6 +223,24 @@
   color: var(--blue-400);
 }
 
+/* The time-of-day trigger is the sole occupant of its slot — let its color
+   fill the whole right section flush to the bar's own edges, instead of
+   floating as an inset pill like the Date field's Today/Tomorrow pair. */
+.timeOfDayAccessory {
+  padding: 0;
+  align-self: stretch;
+}
+
+.timeOfDayAccessory .dropdownWrapper {
+  height: 100%;
+}
+
+.timeOfDayTrigger {
+  width: 100%;
+  border-radius: 0 calc(1rem - 1.5px) calc(1rem - 1.5px) 0;
+  padding: 0 0.9rem;
+}
+
 .chip {
   flex: 1;
   min-width: 0;
@@ -306,7 +324,7 @@
   align-items: center;
   gap: 0.3rem;
   text-align: left;
-  border: none;
+  border: 1.5px solid transparent;
   background: none;
   border-radius: 0.6rem;
   padding: 0 0.6rem;
@@ -315,11 +333,42 @@
   font-weight: 600;
   color: var(--color-fg);
   cursor: pointer;
+  margin-bottom: 0.15rem;
 }
 
-.dropdownOption:hover,
+.dropdownOption:last-child {
+  margin-bottom: 0;
+}
+
+.dropdownOption:hover {
+  filter: brightness(0.96);
+}
+
 .dropdownOptionSelected {
-  background: var(--color-surface-hover);
+  border-color: var(--color-fg);
+}
+
+/* Same per-bucket pastel used for the section chips on the task list page
+   — both the dropdown options and the trigger (once something's picked)
+   pick these up, via TIME_OF_DAY_COLOR_CLASS in CreateTaskPage.tsx. */
+.timeOfDayAnytime {
+  background: #fcf2dd;
+  color: var(--color-muted-fg);
+}
+
+.timeOfDayMorning {
+  background: #f1fce7;
+  color: var(--color-muted-fg);
+}
+
+.timeOfDayAfternoon {
+  background: #edf9fb;
+  color: var(--color-muted-fg);
+}
+
+.timeOfDayEvening {
+  background: #ebefff;
+  color: var(--color-muted-fg);
 }
 
 .subtaskList {
@@ -383,6 +432,36 @@
   font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
+}
+
+/* Only the handle initiates a drag — the row's own tap-to-edit and delete
+   button keep working untouched (see the drag-reorder mockups' Option A). */
+.subtaskHandle {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 0;
+  margin-top: 0.1rem;
+  color: var(--color-muted);
+  cursor: grab;
+  touch-action: none;
+}
+
+/* Pulled out of flow to follow the pointer — see handleSubtaskDragStart in
+   CreateTaskPage.tsx. */
+.subtaskRowDragging {
+  z-index: 30;
+  background: var(--color-bg);
+  border-radius: 0.75rem;
+  border-top: none;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
 }
 
 .subtaskActions {

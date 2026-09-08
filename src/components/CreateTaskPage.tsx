@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Task, TimeOfDay } from "@prisma/client";
-import { createTask, updateTask, deleteTask, breakdownTask } from "@/lib/api-client";
+import { createTask, updateTask, deleteTask, breakdownTask, reorderTask } from "@/lib/api-client";
 import { autogrow } from "@/lib/autogrow";
 import { SparkleIcon } from "./icons/SparkleIcon";
 import { BackIcon } from "./icons/BackIcon";
+import { DragHandleIcon } from "./icons/DragHandleIcon";
 import { PlusIcon } from "./icons/PlusIcon";
 import { ClockIcon } from "./icons/ClockIcon";
 import { SunriseIcon } from "./icons/SunriseIcon";
@@ -25,6 +26,16 @@ const TIME_OF_DAY_OPTIONS: { value: TimeOfDayChoice; icon: React.ReactNode; labe
   { value: "afternoon", icon: <SunIcon size={14} />, label: "Afternoon" },
   { value: "evening", icon: <MoonIcon size={14} />, label: "Evening" },
 ];
+
+// Same per-bucket pastel used for the section chips on the task list page
+// (see TaskApp.module.css's .anytime/.morning/.afternoon/.evening) — kept
+// here too since CSS Modules don't share classes across files.
+const TIME_OF_DAY_COLOR_CLASS: Record<TimeOfDayChoice, string> = {
+  anytime: styles.timeOfDayAnytime,
+  morning: styles.timeOfDayMorning,
+  afternoon: styles.timeOfDayAfternoon,
+  evening: styles.timeOfDayEvening,
+};
 
 // Maps a clock time to a bucket so picking an exact time also fills in a
 // sensible time-of-day, instead of leaving it at the ANYTIME default.
@@ -120,6 +131,23 @@ export function CreateTaskPage({
   const todRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
+  // Drag-to-reorder subtasks by their handle. subtasksRef mirrors the
+  // latest `subtasks` array so the pointerup handler (added once at drag
+  // start, so its closure is otherwise frozen at that point) can read the
+  // final order instead of the stale one from when the drag began.
+  const subtasksRef = useRef(subtasks);
+  useEffect(() => {
+    subtasksRef.current = subtasks;
+  }, [subtasks]);
+  const subtaskRowRefs = useRef<Map<string, HTMLLIElement>>(new Map());
+  const dragRef = useRef<{ id: string; grabOffsetY: number } | null>(null);
+  const [dragVisual, setDragVisual] = useState<{
+    id: string;
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
+
   const hasTitle = title.trim().length > 0;
 
   // Cancel and Create both end by pushing back to "/" — that navigation runs
@@ -140,6 +168,18 @@ export function CreateTaskPage({
   }, []);
 
   useCloseOnOutside(todRef, todOpen, () => setTodOpen(false));
+
+  // Interacting with anything else on the page (changing the date,
+  // dragging a subtask, ...) should clear the title's auto-selected text
+  // instead of leaving it highlighted — collapsing the selection, not just
+  // blurring, since a blurred input's selection otherwise still renders as
+  // a (dimmer) highlight in most browsers.
+  useCloseOnOutside(titleInputRef, true, () => {
+    const input = titleInputRef.current;
+    if (!input) return;
+    input.setSelectionRange(input.value.length, input.value.length);
+    input.blur();
+  });
 
   // What the time-of-day dropdown should show: an explicit bucket pick, or
   // (if an exact time is set instead) the bucket that time falls into.
@@ -255,6 +295,93 @@ export function CreateTaskPage({
     } catch {
       setError("Couldn't save that subtask's name.");
     }
+  }
+
+  // Drag a subtask by its handle to reorder it among its siblings. The
+  // dragged row is pulled out of flow (position: fixed, following the
+  // pointer) while the `subtasks` array itself is reordered live — the
+  // other rows then just naturally lay out around wherever it currently
+  // sits, without needing a separate placeholder element.
+  function handleSubtaskDragStart(e: React.PointerEvent, subtask: Task) {
+    e.preventDefault();
+    const el = subtaskRowRefs.current.get(subtask.id);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    dragRef.current = { id: subtask.id, grabOffsetY: e.clientY - rect.top };
+    setDragVisual({ id: subtask.id, top: rect.top, left: rect.left, width: rect.width });
+    window.addEventListener("pointermove", handleSubtaskDragMove);
+    window.addEventListener("pointerup", handleSubtaskDragEnd);
+  }
+
+  function handleSubtaskDragMove(e: PointerEvent) {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const newTop = e.clientY - drag.grabOffsetY;
+    setDragVisual((v) => (v ? { ...v, top: newTop } : v));
+
+    const el = subtaskRowRefs.current.get(drag.id);
+    if (!el) return;
+    const dragMid = newTop + el.getBoundingClientRect().height / 2;
+
+    setSubtasks((prev) => {
+      let arr = prev;
+      let idx = arr.findIndex((s) => s.id === drag.id);
+      if (idx === -1) return prev;
+
+      let moved = true;
+      while (moved) {
+        moved = false;
+        if (idx > 0) {
+          const prevEl = subtaskRowRefs.current.get(arr[idx - 1].id);
+          if (prevEl) {
+            const r = prevEl.getBoundingClientRect();
+            if (dragMid < r.top + r.height / 2) {
+              arr = arr.slice();
+              [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+              idx -= 1;
+              moved = true;
+              continue;
+            }
+          }
+        }
+        if (idx < arr.length - 1) {
+          const nextEl = subtaskRowRefs.current.get(arr[idx + 1].id);
+          if (nextEl) {
+            const r = nextEl.getBoundingClientRect();
+            if (dragMid > r.top + r.height / 2) {
+              arr = arr.slice();
+              [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]];
+              idx += 1;
+              moved = true;
+            }
+          }
+        }
+      }
+      // Written synchronously (not left to the subtasks-effect above) so
+      // handleSubtaskDragEnd — which can fire in the same tick as the last
+      // pointermove during a fast drag, before React commits and re-runs
+      // effects — always reads the truly latest order, not a stale one.
+      subtasksRef.current = arr;
+      return arr;
+    });
+  }
+
+  function handleSubtaskDragEnd() {
+    window.removeEventListener("pointermove", handleSubtaskDragMove);
+    window.removeEventListener("pointerup", handleSubtaskDragEnd);
+    const drag = dragRef.current;
+    dragRef.current = null;
+    setDragVisual(null);
+    if (!drag || !draftTaskId) return;
+
+    const arr = subtasksRef.current;
+    const idx = arr.findIndex((s) => s.id === drag.id);
+    if (idx === -1) return;
+    const prevOrder = arr[idx - 1]?.order ?? null;
+    const nextOrder = arr[idx + 1]?.order ?? null;
+    reorderTask(drag.id, { parentTaskId: draftTaskId, prevOrder, nextOrder }).catch(() => {
+      setError("Couldn't save the new subtask order.");
+    });
   }
 
   async function handleCreate() {
@@ -411,12 +538,16 @@ export function CreateTaskPage({
 
             <span className={styles.pickerDivider} aria-hidden="true" />
 
-            <div className={styles.pickerAccessory}>
+            <div className={`${styles.pickerAccessory} ${styles.timeOfDayAccessory}`}>
               <div className={styles.dropdownWrapper} ref={todRef}>
                 <button
                   type="button"
-                  className={`${styles.pickerBtn} ${
-                    effectiveTimeOfDay || todOpen ? styles.pickerBtnActive : ""
+                  className={`${styles.pickerBtn} ${styles.timeOfDayTrigger} ${
+                    effectiveTimeOfDay
+                      ? TIME_OF_DAY_COLOR_CLASS[effectiveTimeOfDay]
+                      : todOpen
+                        ? styles.pickerBtnActive
+                        : ""
                   }`}
                   onClick={() => setTodOpen((v) => !v)}
                   aria-haspopup="listbox"
@@ -457,7 +588,7 @@ export function CreateTaskPage({
                         key={opt.value}
                         role="option"
                         aria-selected={effectiveTimeOfDay === opt.value}
-                        className={`${styles.dropdownOption} ${
+                        className={`${styles.dropdownOption} ${TIME_OF_DAY_COLOR_CLASS[opt.value]} ${
                           effectiveTimeOfDay === opt.value ? styles.dropdownOptionSelected : ""
                         }`}
                         onClick={() => {
@@ -481,7 +612,31 @@ export function CreateTaskPage({
           {(subtasks.length > 0 || addingSubtask) && (
             <ul className={styles.subtaskList}>
               {subtasks.map((subtask) => (
-                <li key={subtask.id} className={styles.subtaskRow}>
+                <li
+                  key={subtask.id}
+                  ref={(el) => {
+                    if (el) subtaskRowRefs.current.set(subtask.id, el);
+                    else subtaskRowRefs.current.delete(subtask.id);
+                  }}
+                  className={`${styles.subtaskRow} ${
+                    dragVisual?.id === subtask.id ? styles.subtaskRowDragging : ""
+                  }`}
+                  style={
+                    dragVisual?.id === subtask.id
+                      ? { position: "fixed", top: dragVisual.top, left: dragVisual.left, width: dragVisual.width }
+                      : undefined
+                  }
+                >
+                  {subtasks.length > 1 && (
+                    <button
+                      type="button"
+                      className={styles.subtaskHandle}
+                      aria-label={`Reorder ${subtask.title}`}
+                      onPointerDown={(e) => handleSubtaskDragStart(e, subtask)}
+                    >
+                      <DragHandleIcon size={14} />
+                    </button>
+                  )}
                   <textarea
                     className={styles.subtaskInput}
                     rows={1}
