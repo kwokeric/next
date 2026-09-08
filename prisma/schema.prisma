@@ -48,6 +48,17 @@ enum TimeOfDay {
   EVENING
 }
 
+// A recurring task doesn't stay DONE — completing it rolls `scheduledFor`
+// forward to its next occurrence and resets status to TODO instead (see
+// the PATCH /api/tasks/[taskId] handler). WEEKDAYS skips Sat/Sun; the
+// others are a fixed-length step from the previous `scheduledFor`.
+enum RepeatFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  WEEKDAYS
+}
+
 model Task {
   id           String     @id @default(cuid())
   projectId    String
@@ -71,6 +82,8 @@ model Task {
   scheduledFor  DateTime?  @db.Date
   timeOfDay     TimeOfDay  @default(ANYTIME)
   scheduledTime DateTime?  @db.Time
+  // Unset (the default) means "doesn't repeat."
+  repeatFrequency RepeatFrequency?
   // Fractional-index sort key (see fractional-indexing package) — a plain
   // string so siblings can be reordered/inserted without renumbering rows.
   order        String

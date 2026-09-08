@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { TaskStatus, type Task } from "@prisma/client";
+import { nextOccurrence } from "@/lib/recur";
 
 // Walks up the parent chain, auto-completing (or un-completing) each
 // ancestor based on whether all of its direct children are non-TODO.
@@ -66,7 +67,7 @@ export async function PATCH(
   const { taskId } = await params;
   const body = await request.json();
 
-  const task = await prisma.task.update({
+  let task = await prisma.task.update({
     where: { id: taskId },
     data: {
       ...(typeof body.title === "string" ? { title: body.title } : {}),
@@ -88,11 +89,29 @@ export async function PATCH(
       ...(body.scheduledTime !== undefined
         ? { scheduledTime: body.scheduledTime ? new Date(body.scheduledTime) : null }
         : {}),
+      ...(body.repeatFrequency !== undefined
+        ? { repeatFrequency: body.repeatFrequency ?? null }
+        : {}),
     },
   });
 
   const changed = [task];
-  if (body.status) {
+
+  if (body.status === TaskStatus.DONE && task.repeatFrequency) {
+    // A recurring task doesn't rest in DONE — it cycles to its next
+    // occurrence instead, taking any subtasks back to TODO with it so the
+    // next round starts fresh.
+    await cascadeChildrenStatus(task.id, TaskStatus.TODO, changed);
+    task = await prisma.task.update({
+      where: { id: task.id },
+      data: {
+        status: TaskStatus.TODO,
+        scheduledFor: nextOccurrence(task.scheduledFor ?? new Date(), task.repeatFrequency),
+      },
+    });
+    changed[0] = task;
+    await cascadeParentStatus(task.parentTaskId, changed);
+  } else if (body.status) {
     await cascadeChildrenStatus(task.id, task.status, changed);
     await cascadeParentStatus(task.parentTaskId, changed);
   }

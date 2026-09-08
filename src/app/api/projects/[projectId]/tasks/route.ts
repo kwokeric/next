@@ -48,6 +48,7 @@ export async function POST(
       ...(body.timeOfDay ? { timeOfDay: body.timeOfDay } : {}),
       scheduledFor: body.scheduledFor ? new Date(body.scheduledFor) : null,
       scheduledTime: body.scheduledTime ? new Date(body.scheduledTime) : null,
+      ...(body.repeatFrequency ? { repeatFrequency: body.repeatFrequency } : {}),
       order: keyForAppend(lastSibling?.order ?? null),
     },
   });

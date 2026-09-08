@@ -1,4 +1,4 @@
-import type { Task, TimeOfDay } from "@prisma/client";
+import type { Task, TimeOfDay, RepeatFrequency } from "@prisma/client";
 
 // Task fields Prisma types as Date — plain res.json() leaves these as ISO
 // strings instead, which crashes anything downstream expecting a real Date
@@ -23,6 +23,7 @@ export function createTask(
     timeOfDay?: TimeOfDay;
     scheduledFor?: string | null;
     scheduledTime?: string | null;
+    repeatFrequency?: RepeatFrequency | null;
   }
 ): Promise<Task> {
   return fetch(`/api/projects/${projectId}/tasks`, {
@@ -40,6 +41,7 @@ export function updateTask(
     Pick<Task, "title" | "description" | "status" | "priority" | "timeOfDay"> & {
       scheduledFor: string | null;
       scheduledTime: string | null;
+      repeatFrequency: RepeatFrequency | null;
     }
   >
 ): Promise<Task[]> {

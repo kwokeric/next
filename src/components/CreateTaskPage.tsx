@@ -3,12 +3,13 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import type { Task, TimeOfDay } from "@prisma/client";
+import type { Task, TimeOfDay, RepeatFrequency } from "@prisma/client";
 import { createTask, updateTask, deleteTask, breakdownTask, reorderTask } from "@/lib/api-client";
 import { autogrow } from "@/lib/autogrow";
 import { SparkleIcon } from "./icons/SparkleIcon";
 import { BackIcon } from "./icons/BackIcon";
 import { DragHandleIcon } from "./icons/DragHandleIcon";
+import { RepeatIcon } from "./icons/RepeatIcon";
 import { PlusIcon } from "./icons/PlusIcon";
 import { ClockIcon } from "./icons/ClockIcon";
 import { SunriseIcon } from "./icons/SunriseIcon";
@@ -36,6 +37,13 @@ const TIME_OF_DAY_COLOR_CLASS: Record<TimeOfDayChoice, string> = {
   afternoon: styles.timeOfDayAfternoon,
   evening: styles.timeOfDayEvening,
 };
+
+const REPEAT_OPTIONS: { value: RepeatFrequency; label: string }[] = [
+  { value: "DAILY", label: "Daily" },
+  { value: "WEEKLY", label: "Weekly" },
+  { value: "MONTHLY", label: "Monthly" },
+  { value: "WEEKDAYS", label: "Weekdays" },
+];
 
 // Maps a clock time to a bucket so picking an exact time also fills in a
 // sensible time-of-day, instead of leaving it at the ANYTIME default.
@@ -119,6 +127,12 @@ export function CreateTaskPage({
     initialExactTime ? "exact" : initialTimeOfDay ? (initialTimeOfDay.toLowerCase() as TimeChoice) : ""
   );
   const [exactTime, setExactTime] = useState(initialExactTime ?? "");
+  // "" means "doesn't repeat" — kept as a separate on/off concept from the
+  // frequency itself so toggling repeat off doesn't lose which frequency
+  // was picked if the user immediately turns it back on.
+  const [repeatFrequency, setRepeatFrequency] = useState<RepeatFrequency | "">(
+    editingTask?.repeatFrequency ?? ""
+  );
 
   const [subtasks, setSubtasks] = useState<Task[]>(initialSubtasks);
   const [draftTaskId, setDraftTaskId] = useState<string | null>(editingTask?.id ?? null);
@@ -209,6 +223,16 @@ export function CreateTaskPage({
     return null;
   }
 
+  function computeRepeatFrequency(): RepeatFrequency | null {
+    return repeatFrequency || null;
+  }
+
+  function toggleRepeat() {
+    // Turning it on defaults to the first preset rather than leaving no
+    // chip selected — turning it back off clears the frequency entirely.
+    setRepeatFrequency((prev) => (prev ? "" : "DAILY"));
+  }
+
   function toggleDateChoice(choice: Exclude<DateChoice, "" | "custom">) {
     const next = dateChoice === choice ? "" : choice;
     setDateChoice(next);
@@ -240,6 +264,7 @@ export function CreateTaskPage({
       timeOfDay: computeTimeOfDay(),
       scheduledFor: computeScheduledFor(),
       scheduledTime: computeScheduledTime(),
+      repeatFrequency: computeRepeatFrequency(),
     });
     setDraftTaskId(created.id);
     return created.id;
@@ -395,6 +420,7 @@ export function CreateTaskPage({
           timeOfDay: computeTimeOfDay(),
           scheduledFor: computeScheduledFor(),
           scheduledTime: computeScheduledTime(),
+          repeatFrequency: computeRepeatFrequency(),
         });
       } else {
         await createTask(projectId, {
@@ -403,6 +429,7 @@ export function CreateTaskPage({
           timeOfDay: computeTimeOfDay(),
           scheduledFor: computeScheduledFor(),
           scheduledTime: computeScheduledTime(),
+          repeatFrequency: computeRepeatFrequency(),
         });
       }
       if (editingTask) {
@@ -520,8 +547,34 @@ export function CreateTaskPage({
               >
                 Tomorrow
               </button>
+              <button
+                type="button"
+                className={`${styles.repeatToggle} ${repeatFrequency ? styles.repeatToggleActive : ""}`}
+                onClick={toggleRepeat}
+                aria-pressed={Boolean(repeatFrequency)}
+                aria-label={repeatFrequency ? "Turn off repeat" : "Make this task repeat"}
+              >
+                <RepeatIcon size={15} />
+              </button>
             </div>
           </div>
+
+          {repeatFrequency && (
+            <div className={styles.repeatRow}>
+              {REPEAT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`${styles.repeatOption} ${
+                    repeatFrequency === opt.value ? styles.repeatOptionActive : ""
+                  }`}
+                  onClick={() => setRepeatFrequency(opt.value)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className={styles.fieldBlock}>
