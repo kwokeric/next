@@ -12,6 +12,8 @@ until the next step feels almost impossible to avoid — by hand or with
 ✨AI✨. Next also simplifies task execution by surfacing the next action
 instead of a wall of to-dos.
 
+[Try it out yourself](https://next-puce-xi.vercel.app/)! Data is reset a few times a day.
+
 <table>
   <tr>
     <td width="33%">
