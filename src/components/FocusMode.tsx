@@ -83,16 +83,13 @@ export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
 
   const rootTask: TaskNode | null = ancestors[0] ?? nextTask;
 
-  // The current step's siblings within its parent task — normally just
-  // rootTask's direct subtasks. Handles the edge case where rootTask itself
-  // is the next action (all its subtasks are already done) by appending it
-  // to the list so it still gets a hero row.
-  const siblings: TaskNode[] = useMemo(() => {
-    if (!rootTask) return [];
-    if (rootTask.subtasks.length === 0) return [rootTask];
-    if (nextTask && rootTask.subtasks.some((s) => s.id === nextTask.id)) return rootTask.subtasks;
-    return nextTask ? [...rootTask.subtasks, rootTask] : rootTask.subtasks;
-  }, [rootTask, nextTask]);
+  // The step counter and progress segments are relative to the current
+  // step's *immediate* parent, not the root — once a step has been broken
+  // down further, the next action is a grandchild of the root and wouldn't
+  // be found among the root's direct subtasks. No parent means the next
+  // action is a top-level task itself, so there's no step counter.
+  const parentOfStep: TaskNode | null = ancestors[ancestors.length - 1] ?? null;
+  const siblings: TaskNode[] = parentOfStep?.subtasks ?? [];
 
   const upcomingRoots = activeRoots.filter((t) => t.id !== rootTask?.id);
 
@@ -162,9 +159,16 @@ export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
           <>
             <article className={styles.focusCard}>
               <div className={styles.cardTop}>
+                {/* The overall task this step belongs to, tinted by its
+                    time of day. When the step IS the top-level task, the
+                    headline already names it, so show the time of day. */}
                 <span className={styles.todChip} data-tod={rootTask.timeOfDay.toLowerCase()}>
                   {TIME_OF_DAY_META[rootTask.timeOfDay].icon}
-                  {TIME_OF_DAY_META[rootTask.timeOfDay].label}
+                  <span className={styles.todChipText}>
+                    {rootTask.id !== nextTask.id
+                      ? rootTask.title
+                      : TIME_OF_DAY_META[rootTask.timeOfDay].label}
+                  </span>
                 </span>
                 <div className={styles.kebabWrap} ref={menuOpen ? menuRef : undefined}>
                   <button
@@ -209,10 +213,13 @@ export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
                   task text is never set in the display face. */}
               <h2 className={styles.stepTitle}>{nextTask.title}</h2>
 
-              {rootTask.id !== nextTask.id && (
+              {parentOfStep && currentIndex >= 0 && (
                 <>
                   <p className={styles.stepMeta}>
-                    {rootTask.title} · Step {currentIndex + 1} of {siblings.length}
+                    {/* Only name the parent when it isn't already the pill
+                        (i.e. the step is nested below a broken-down step). */}
+                    {parentOfStep.id !== rootTask.id && `${parentOfStep.title} · `}
+                    Step {currentIndex + 1} of {siblings.length}
                   </p>
                   <div
                     className={styles.segments}

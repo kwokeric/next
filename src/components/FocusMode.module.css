@@ -59,6 +59,8 @@
 }
 
 .todChip {
+  min-width: 0;
+  max-width: 100%;
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
@@ -69,6 +71,18 @@
   color: var(--tod-fg);
   font-size: 0.75rem;
   font-weight: 600;
+}
+
+.todChip svg {
+  flex-shrink: 0;
+}
+
+/* Long parent titles truncate rather than pushing the kebab off-card. */
+.todChipText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Sized for a sentence, not a headline: steps are often long ("Research
