@@ -57,4 +57,5 @@ export async function seedDemoTasks(prisma: PrismaClient, projectId: string): Pr
   await addTask("Lunch with Sam", null, TaskStatus.TODO, TimeOfDay.AFTERNOON);
   await addTask("Evening walk", null, TaskStatus.TODO, TimeOfDay.EVENING);
   await addTask("Read before bed", null, TaskStatus.TODO, TimeOfDay.EVENING);
+  await addTask("Sleep", null, TaskStatus.TODO, TimeOfDay.EVENING);
 }
