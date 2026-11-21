@@ -13,200 +13,158 @@
   overscroll-behavior: none;
   display: flex;
   flex-direction: column;
-  background: #eceae4;
 }
 
-/* Grid, not flex — a 3rd column that reserves its 1fr share even with
-   nothing in it so the title stays centered. Matches CreateTaskPage's
-   header treatment. */
+/* Same left-aligned eyebrow + serif title block as the other pages (see
+   .page-eyebrow / .page-title in globals.css). */
 .header {
   flex-shrink: 0;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid var(--color-border-subtle);
-  position: sticky;
-  top: 0;
-  background: #eceae4;
-  z-index: 10;
+  padding: 2.5rem 1.5rem 1.125rem;
 }
 
-.headerTitle {
-  font-size: 1.75rem;
-  font-weight: 600;
-  font-family: var(--font-belgiano-serif), serif;
-}
-
-/* Fills the rest of the viewport and centers the current-task card in it —
-   the whole point of "focus" mode is that one card, not a scrolling list.
-   min-height: 0 overrides the flex default of min-height: auto, which
-   otherwise refuses to let a flex item shrink below its content size —
-   that's what let long content grow .page past the viewport before. */
+/* The current step's card plus an "After this" preview. min-height: 0 lets
+   this flex item shrink below its content so long content scrolls here
+   instead of growing .page past the viewport. */
 .stage {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  /* Extra bottom padding biases the centered card upward, clear of the
-     floating BottomNav pill overlaid on top of this page. */
-  padding: 1.5rem 1.25rem calc(1.5rem + 4.5rem);
-  perspective: 900px;
+  gap: 0.75rem;
+  /* Extra bottom padding keeps the last card clear of the floating
+     BottomNav pill overlaid on top of this page. */
+  padding: 0 1rem calc(1.5rem + 4.5rem);
 }
 
 .empty {
+  padding: 2rem 0.5rem;
   font-size: 1.125rem;
-  color: var(--color-muted);
-}
-
-.taskCard {
-  width: 100%;
-  border-radius: 1.1rem;
-}
-
-/* Capped so a task with many steps never grows the card past a reasonable
-   share of the screen — flex column with the title and "Mark as done"
-   pinned (flex-shrink: 0) and only .tlScroll in between scrolling, so the
-   step list is what gives way, not the page around it. */
-.current {
-  display: flex;
-  flex-direction: column;
-  max-height: min(34rem, 62dvh);
-  overflow: hidden;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border-subtle);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.1);
-  padding: 1.4rem 1.4rem 1rem;
-  position: relative;
-  z-index: 4;
-}
-
-.taskCardHead {
-  flex-shrink: 0;
-  margin-bottom: 1.1rem;
-}
-
-.tlScroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* old Edge */
-}
-
-.tlScroll::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, and other WebKit/Blink browsers */
-}
-
-.taskTitle {
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin: 0;
-}
-
-.taskMeta {
-  font-size: 0.8rem;
   color: var(--color-muted-fg);
-  margin: 0.25rem 0 0;
 }
 
-.tlRow {
-  display: flex;
-  gap: 0.85rem;
-}
-
-.tlRail {
-  width: 1.4rem;
+.focusCard {
   flex-shrink: 0;
+  background: var(--color-card);
+  border-radius: 1.625rem;
+  box-shadow: var(--shadow-raised);
+  padding: 1.25rem 1.25rem 1.25rem;
+}
+
+.cardTop {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
-.tlDot {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  background: var(--color-border);
+.todChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 1.75rem;
+  padding: 0 0.6875rem;
+  border-radius: var(--radius-pill);
+  background: var(--tod-bg);
+  color: var(--tod-fg);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Sized for a sentence, not a headline: steps are often long ("Research
+   neighborhoods to stay in Tokyo and Kyoto"), so this stays in Inter at a
+   size that wraps comfortably. */
+.stepTitle {
+  margin-top: 1.125rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.stepMeta {
   margin-top: 0.5rem;
-  flex-shrink: 0;
+  font-size: 0.875rem;
+  color: var(--color-muted-fg);
 }
 
-.tlDotDone {
+/* One segment per sibling step: done, current (highlighted), upcoming. */
+.segments {
+  margin-top: 0.875rem;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.segment {
+  flex: 1;
+  height: 0.375rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-subtle);
+}
+
+.segmentDone {
   background: var(--blue-300);
 }
 
-.tlDotCurrent {
-  width: 0.85rem;
-  height: 0.85rem;
+.segmentCurrent {
   background: var(--blue-400);
-  box-shadow: 0 0 0 5px rgba(127, 184, 224, 0.22);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue-400) 25%, transparent);
 }
 
-.tlLine {
-  flex: 1;
-  width: 1.5px;
-  background: var(--color-border-subtle);
-  margin-top: 0.2rem;
-  min-height: 1.5rem;
-}
-
-.tlBody {
-  flex: 1;
-  min-width: 0;
-  padding-bottom: 1.5rem;
-}
-
-.tlBodyDone {
-  padding-bottom: 1.1rem;
-}
-
-.tlBodyDone .subTitle {
-  text-decoration: line-through;
-  color: var(--color-muted);
-  font-weight: 400;
-}
-
-.tlBodyUpcoming {
-  padding-bottom: 1.6rem;
-}
-
-.tlBodyUpcoming .subTitle {
-  font-weight: 450;
-  color: var(--color-fg);
-  font-size: 0.95rem;
-  line-height: 1.4;
-  padding-top: 0.4rem;
-}
-
-.tlBodyCurrent {
-  padding-bottom: 1.6rem;
-}
-
-.tlBodyCurrent .subTitle {
-  font-weight: 700;
-  font-size: 1.02rem;
-  line-height: 1.4;
-  padding-top: 0.3rem;
-}
-
-.subTitle {
-  font-size: 0.98rem;
-  font-weight: 500;
-  margin: 0.1rem 0 0;
-}
-
-/* Title + kebab share a row so the button always sits to the right of the
-   step it belongs to, instead of the old single boxed-in "hero" for
-   whichever step happened to be current. */
-.tlRowContent {
+.doneBtn {
+  margin-top: 1.5rem;
+  width: 100%;
+  height: 3.5rem;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  border: none;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+}
+
+.doneBtn:hover {
+  background: var(--btn-primary-bg-hover);
+}
+
+.secondaryActions {
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.secondaryBtn {
+  height: 2.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.secondaryBtn:hover {
+  background: var(--color-surface-hover);
+}
+
+.secondaryBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .kebabWrap {
@@ -215,15 +173,13 @@
 }
 
 .kebabBtn {
-  width: 1.9rem;
-  height: 1.9rem;
-  margin-top: 0.1rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 50%;
   border: none;
   background: var(--color-surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   color: var(--color-muted-fg);
   cursor: pointer;
 }
@@ -234,10 +190,10 @@
   right: 0;
   z-index: 6;
   width: 9.5rem;
-  background: var(--color-bg);
+  background: var(--color-card);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 0.65rem;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-float);
   padding: 0.3rem;
   display: flex;
   flex-direction: column;
@@ -249,10 +205,10 @@
   gap: 0.45rem;
   border: none;
   background: none;
-  padding: 0.45rem 0.5rem;
-  border-radius: 0.4rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 0.625rem;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.875rem;
   color: var(--color-fg);
   cursor: pointer;
   text-align: left;
@@ -261,7 +217,7 @@
 
 .menuItem:hover,
 .menuItem:active {
-  background: var(--color-surface-hover);
+  background: var(--color-surface);
 }
 
 .menuDivider {
@@ -274,86 +230,58 @@
   color: var(--color-danger-fg);
 }
 
-/* Pinned to the bottom of the card, always in the same place, so marking a
-   step done doesn't shift this button around the way it used to when it
-   lived inside whichever row happened to be current. */
-.doneBtnWrap {
+.afterCard {
   flex-shrink: 0;
-  margin-top: 0.4rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--color-border-subtle);
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 0.375rem 1.125rem;
 }
 
-.doneBtn {
-  width: 100%;
-  height: 2.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  border: none;
-  border-radius: 999px;
-  font: inherit;
-  font-size: 0.92rem;
-  font-weight: 700;
-  cursor: pointer;
-  background: var(--blue-400);
-  color: var(--btn-primary-fg);
-}
-
-/* The receding "wheel" of upcoming tasks below the current card — each
-   depth shrinks and tilts back via the .stage's perspective. Deliberately
-   NOT using `opacity` on these: opacity fades the background too, which lets
-   whatever's behind show through and defeats the "covered by the card in
-   front" look. Instead the background stays fully opaque (so z-index +
-   negative margin overlap genuinely occludes the card behind it) and only
-   the text color fades with depth. */
-.peek {
-  transform-origin: top center;
-  text-align: left;
-  padding: 1rem 1.4rem 1.2rem;
-  pointer-events: none;
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-bg);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-}
-
-.peek .taskTitle {
-  font-size: 1.05rem;
-}
-
-.peek1 {
-  transform: scale(0.93);
-  z-index: 3;
-  margin-top: -0.4rem;
-}
-
-.peek2 {
-  transform: scale(0.86);
-  z-index: 2;
-  margin-top: -0.8rem;
-  background: var(--color-surface);
-}
-
-.peek2 .taskTitle,
-.peek2 .taskMeta {
+.afterHeading {
+  padding: 0.75rem 0 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--color-muted-fg);
 }
 
-.peek3 {
-  transform: scale(0.8);
-  z-index: 1;
-  margin-top: -1.5rem;
-  background: var(--color-surface);
+.afterRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.75rem;
+  border-top: 1px solid var(--color-border-subtle);
+  font-size: 0.9375rem;
 }
 
-.peek3 .taskTitle,
-.peek3 .taskMeta {
-  color: var(--color-muted);
+.afterRowMuted {
+  color: var(--color-muted-fg);
+}
+
+.afterDot {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+/* The next whole task's dot takes its time-of-day color (via data-tod). */
+.afterDotTod {
+  background: var(--tod-ring);
+}
+
+.afterText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .errorText {
-  margin-top: 1rem;
   font-size: 0.8125rem;
   color: var(--color-danger-fg);
+  padding: 0 0.5rem;
 }

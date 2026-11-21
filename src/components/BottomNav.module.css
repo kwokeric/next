@@ -23,11 +23,10 @@
   gap: 0.25rem;
   width: 100%;
   max-width: 22rem;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 999px;
-  padding: 0.4rem;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.16);
+  background: var(--color-card);
+  border-radius: var(--radius-pill);
+  padding: 0.375rem;
+  box-shadow: var(--shadow-float);
 }
 
 .item {
@@ -36,15 +35,16 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  padding: 0.6rem 0.5rem;
-  border-radius: 999px;
+  height: 2.75rem;
+  padding: 0 0.5rem;
+  border-radius: var(--radius-pill);
   color: var(--color-muted-fg);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
 }
 
 .itemActive {
-  background: color-mix(in srgb, var(--blue-400) 16%, var(--color-bg));
-  color: var(--blue-400);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-ink);
 }

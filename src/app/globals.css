@@ -1,43 +1,141 @@
+/* Design tokens. Every page sits on the same warm "paper" ground
+   (--color-bg) with white cards (--color-card) on top; --color-surface is
+   the inset fill used for controls *inside* a card (pills, segmented
+   controls). Radii and shadows are a fixed scale — reach for these
+   instead of one-off values so the pages stay visually consistent. */
 :root {
-  --color-bg: #ffffff;
-  --color-fg: #171717;
-  --color-muted: #a3a3a3;
-  --color-muted-fg: #737373;
-  --color-border: #d4d4d4;
-  --color-border-subtle: #e5e5e5;
-  --color-border-focus: #737373;
-  --color-surface: #fafafa;
-  --color-surface-hover: #f5f5f5;
+  --color-bg: #f6f3ee;
+  --color-card: #ffffff;
+  --color-fg: #1c1a17;
+  --color-muted: #a8a29a;
+  --color-muted-fg: #6f6a62;
+  --color-border: #e6e0d6;
+  --color-border-subtle: #f0ece5;
+  --color-border-focus: #6f6a62;
+  --color-surface: #f6f3ee;
+  --color-surface-hover: #efebe4;
 
-  --btn-primary-bg-hover: #404040;
-  --btn-primary-fg: #ffffff;
+  --btn-primary-bg: #7fb8e0;
+  --btn-primary-bg-hover: #6eabd6;
+  /* Dark ink on the soft blue — white text on --blue-400 is only ~2:1. */
+  --btn-primary-fg: #0e2a3f;
 
-  --color-danger-fg: #f87171;
+  --color-accent-tint: #eaf4fb;
+  --color-accent-ink: #2c6a96;
+
+  --color-danger-fg: #dc5050;
 
   --blue-300: #a0d0ec;
   --blue-400: #7fb8e0;
   --green-300: #b9dd79;
   --green-600: #8ba65b;
   --orange-400: #f2a65a;
+
+  /* Time-of-day pastels: -bg is the fill, -fg the icon/text color on it,
+     -ring the selected-state outline. Consumed via [data-tod] below. */
+  --tod-anytime-bg: #fcf2dd;
+  --tod-anytime-fg: #8a5a12;
+  --tod-anytime-ring: #e2b866;
+  --tod-morning-bg: #f1fce7;
+  --tod-morning-fg: #4d6b22;
+  --tod-morning-ring: #a9cf73;
+  --tod-afternoon-bg: #edf9fb;
+  --tod-afternoon-fg: #23646f;
+  --tod-afternoon-ring: #8fc7d1;
+  --tod-evening-bg: #ebefff;
+  --tod-evening-fg: #3e4a96;
+  --tod-evening-ring: #a6b1ef;
+
+  --radius-card: 1.375rem;
+  --radius-control: 1rem;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(60, 40, 20, 0.05);
+  --shadow-raised: 0 1px 2px rgba(60, 40, 20, 0.05), 0 14px 34px rgba(60, 40, 20, 0.08);
+  --shadow-float: 0 10px 30px rgba(60, 40, 20, 0.14);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #0a0a0a;
-    --color-fg: #ededed;
-    --color-muted: #737373;
-    --color-muted-fg: #a3a3a3;
-    --color-border: #404040;
-    --color-border-subtle: #2e2e2e;
-    --color-border-focus: #a3a3a3;
-    --color-surface: #171717;
-    --color-surface-hover: #1f1f1f;
+    --color-bg: #151311;
+    --color-card: #211e1b;
+    --color-fg: #ede8e1;
+    --color-muted: #6f6a62;
+    --color-muted-fg: #a8a29a;
+    --color-border: #3a3530;
+    --color-border-subtle: #2e2a26;
+    --color-border-focus: #a8a29a;
+    --color-surface: #2a2622;
+    --color-surface-hover: #332e29;
 
-    --btn-primary-bg-hover: #d4d4d4;
-    --btn-primary-fg: #171717;
+    --btn-primary-bg-hover: #94c5e7;
+
+    --color-accent-tint: #1d2f3c;
+    --color-accent-ink: #9fcbea;
 
     --color-danger-fg: #f87171;
+
+    --tod-anytime-bg: #3a2f1c;
+    --tod-anytime-fg: #f0c983;
+    --tod-anytime-ring: #a8823f;
+    --tod-morning-bg: #26331b;
+    --tod-morning-fg: #bfe08f;
+    --tod-morning-ring: #6f8f45;
+    --tod-afternoon-bg: #1b3236;
+    --tod-afternoon-fg: #9fd8e2;
+    --tod-afternoon-ring: #4f8c96;
+    --tod-evening-bg: #262b47;
+    --tod-evening-fg: #b7c0f5;
+    --tod-evening-ring: #6670b0;
+
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 34px rgba(0, 0, 0, 0.35);
+    --shadow-float: 0 10px 30px rgba(0, 0, 0, 0.45);
   }
+}
+
+/* Any element tagged data-tod="morning" (etc.) gets --tod-bg/--tod-fg/
+   --tod-ring for that bucket, so components share one palette instead of
+   each CSS module re-declaring the hex values. */
+[data-tod="anytime"] {
+  --tod-bg: var(--tod-anytime-bg);
+  --tod-fg: var(--tod-anytime-fg);
+  --tod-ring: var(--tod-anytime-ring);
+}
+[data-tod="morning"] {
+  --tod-bg: var(--tod-morning-bg);
+  --tod-fg: var(--tod-morning-fg);
+  --tod-ring: var(--tod-morning-ring);
+}
+[data-tod="afternoon"] {
+  --tod-bg: var(--tod-afternoon-bg);
+  --tod-fg: var(--tod-afternoon-fg);
+  --tod-ring: var(--tod-afternoon-ring);
+}
+[data-tod="evening"] {
+  --tod-bg: var(--tod-evening-bg);
+  --tod-fg: var(--tod-evening-fg);
+  --tod-ring: var(--tod-evening-ring);
+}
+
+/* Shared page header: small uppercase eyebrow over a serif title. The
+   serif is reserved for page/section headings — task text is always
+   Inter. */
+.page-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted-fg);
+}
+
+.page-title {
+  margin-top: 0.375rem;
+  font-family: var(--font-belgiano-serif), serif;
+  font-weight: 400;
+  font-size: 2.875rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 /* Minimal reset (Tailwind's Preflight is gone, so we bring back just what

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import type { Task } from "@prisma/client";
+import type { Task, TimeOfDay } from "@prisma/client";
 import {
   buildTaskTree,
   findAncestorPath,
@@ -14,6 +14,10 @@ import { updateTask, deleteTask, breakdownTask } from "@/lib/api-client";
 import { PlusIcon } from "./icons/PlusIcon";
 import { SparkleIcon } from "./icons/SparkleIcon";
 import { TrashIcon } from "./icons/TrashIcon";
+import { ClockIcon } from "./icons/ClockIcon";
+import { SunriseIcon } from "./icons/SunriseIcon";
+import { SunIcon } from "./icons/SunIcon";
+import { MoonIcon } from "./icons/MoonIcon";
 import styles from "./FocusMode.module.css";
 
 // Closes the kebab menu on an outside tap or Escape — same pattern as
@@ -42,6 +46,16 @@ function useCloseOnOutside(
   }, [open, ref, onClose]);
 }
 
+const TIME_OF_DAY_META: Record<TimeOfDay, { label: string; icon: React.ReactNode }> = {
+  ANYTIME: { label: "Anytime", icon: <ClockIcon size={13} /> },
+  MORNING: { label: "Morning", icon: <SunriseIcon size={13} /> },
+  AFTERNOON: { label: "Afternoon", icon: <SunIcon size={13} /> },
+  EVENING: { label: "Evening", icon: <MoonIcon size={13} /> },
+};
+
+// How many of the current step's later siblings to preview under the card.
+const UPCOMING_STEP_PREVIEW = 3;
+
 function mergeTasks(prev: Task[], newTasks: Task[]): Task[] {
   const byId = new Map(prev.map((t) => [t.id, t]));
   for (const t of newTasks) byId.set(t.id, t);
@@ -51,6 +65,7 @@ function mergeTasks(prev: Task[], newTasks: Task[]): Task[] {
 export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [openMenuStepId, setOpenMenuStepId] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -95,11 +110,14 @@ export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
   async function handleGenerate(stepId: string) {
     setOpenMenuStepId(null);
     setError(null);
+    setIsGenerating(true);
     try {
       const generated = await breakdownTask(stepId);
       setTasks((prev) => [...prev, ...generated]);
     } catch {
       setError("Couldn't generate subtasks. Try again.");
+    } finally {
+      setIsGenerating(false);
     }
   }
 
@@ -120,151 +138,156 @@ export function FocusMode({ initialTasks }: { initialTasks: Task[] }) {
     }
   }
 
+  const currentIndex = nextTask ? siblings.findIndex((s) => s.id === nextTask.id) : -1;
+  const upcomingSteps = siblings
+    .slice(currentIndex + 1)
+    .filter((s) => getTaskProgress(s) < 1)
+    .slice(0, UPCOMING_STEP_PREVIEW);
+  const nextRoot = upcomingRoots[0] ?? null;
+  const menuOpen = nextTask !== null && openMenuStepId === nextTask.id;
+
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <div />
-        <span className={styles.headerTitle}>Focus mode</span>
-        <div />
-      </div>
+      <header className={styles.header}>
+        <p className="page-eyebrow">
+          {activeRoots.length} {activeRoots.length === 1 ? "task" : "tasks"} left
+        </p>
+        <h1 className="page-title">Focus</h1>
+      </header>
 
       <div className={styles.stage}>
         {!nextTask || !rootTask ? (
           <p className={styles.empty}>Nothing left! Add a task to get started.</p>
         ) : (
           <>
-            <div className={`${styles.taskCard} ${styles.current}`}>
-              {/* When the root task IS the current step (a leaf task with no
-                  subtasks, or one whose subtasks are all already done), the hero
-                  row below already shows its title — skip the redundant header. */}
-              {rootTask.id !== nextTask.id && (
-                <div className={styles.taskCardHead}>
-                  <p className={styles.taskTitle}>{rootTask.title}</p>
-                  <p className={styles.taskMeta}>
-                    {siblings.filter((s) => getTaskProgress(s) >= 1).length} of {siblings.length} steps done
-                  </p>
-                </div>
-              )}
-
-              <div className={styles.tlScroll}>
-              {siblings.map((step, i) => {
-                const isLast = i === siblings.length - 1;
-                const isCurrent = step.id === nextTask.id;
-                const isDone = !isCurrent && getTaskProgress(step) >= 1;
-                const menuOpen = openMenuStepId === step.id;
-
-                return (
-                  <div key={step.id} className={styles.tlRow}>
-                    <div className={styles.tlRail}>
-                      <span
-                        className={`${styles.tlDot} ${
-                          isCurrent ? styles.tlDotCurrent : isDone ? styles.tlDotDone : ""
-                        }`}
-                      />
-                      {!isLast && <span className={styles.tlLine} />}
+            <article className={styles.focusCard}>
+              <div className={styles.cardTop}>
+                <span className={styles.todChip} data-tod={rootTask.timeOfDay.toLowerCase()}>
+                  {TIME_OF_DAY_META[rootTask.timeOfDay].icon}
+                  {TIME_OF_DAY_META[rootTask.timeOfDay].label}
+                </span>
+                <div className={styles.kebabWrap} ref={menuOpen ? menuRef : undefined}>
+                  <button
+                    type="button"
+                    className={styles.kebabBtn}
+                    aria-label={`More actions for ${nextTask.title}`}
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpen}
+                    onClick={() => setOpenMenuStepId((v) => (v === nextTask.id ? null : nextTask.id))}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                      <circle cx="3" cy="8" r="1.4" fill="currentColor" />
+                      <circle cx="8" cy="8" r="1.4" fill="currentColor" />
+                      <circle cx="13" cy="8" r="1.4" fill="currentColor" />
+                    </svg>
+                  </button>
+                  {menuOpen && (
+                    <div className={styles.menu} role="menu">
+                      <Link
+                        href={`/tasks/${nextTask.id}/edit`}
+                        className={styles.menuItem}
+                        role="menuitem"
+                      >
+                        Edit step
+                      </Link>
+                      <div className={styles.menuDivider} />
+                      <button
+                        type="button"
+                        className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                        role="menuitem"
+                        onClick={() => handleDelete(nextTask)}
+                      >
+                        <TrashIcon size={12} />
+                        Delete
+                      </button>
                     </div>
-                    <div
-                      className={`${styles.tlBody} ${
-                        isDone ? styles.tlBodyDone : isCurrent ? styles.tlBodyCurrent : styles.tlBodyUpcoming
-                      }`}
-                    >
-                      <div className={styles.tlRowContent}>
-                        <p className={styles.subTitle}>{step.title}</p>
-                        {!isDone && (
-                          <div className={styles.kebabWrap} ref={menuOpen ? menuRef : undefined}>
-                            <button
-                              type="button"
-                              className={styles.kebabBtn}
-                              aria-label={`More actions for ${step.title}`}
-                              aria-haspopup="menu"
-                              aria-expanded={menuOpen}
-                              onClick={() => setOpenMenuStepId((v) => (v === step.id ? null : step.id))}
-                            >
-                              <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true">
-                                <circle cx="3" cy="8" r="1.4" fill="currentColor" />
-                                <circle cx="8" cy="8" r="1.4" fill="currentColor" />
-                                <circle cx="13" cy="8" r="1.4" fill="currentColor" />
-                              </svg>
-                            </button>
-                            {menuOpen && (
-                              <div className={styles.menu} role="menu">
-                                <Link
-                                  href={`/tasks/new?parent=${step.id}`}
-                                  className={styles.menuItem}
-                                  role="menuitem"
-                                >
-                                  <PlusIcon size={12} />
-                                  Add subtask
-                                </Link>
-                                <button
-                                  type="button"
-                                  className={styles.menuItem}
-                                  role="menuitem"
-                                  onClick={() => handleGenerate(step.id)}
-                                >
-                                  <SparkleIcon size={12} />
-                                  Generate
-                                </button>
-                                <div className={styles.menuDivider} />
-                                <button
-                                  type="button"
-                                  className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                                  role="menuitem"
-                                  onClick={() => handleDelete(step)}
-                                >
-                                  <TrashIcon size={12} />
-                                  Delete
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              </div>
-
-              <div className={styles.doneBtnWrap}>
-                <button type="button" className={styles.doneBtn} onClick={handleMarkDone}>
-                  <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-                    <path
-                      d="M3 8.5 L6.5 12 L13 4.5"
-                      stroke="currentColor"
-                      strokeWidth="2.4"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  Mark as done
-                </button>
-              </div>
-            </div>
-
-            {/* A receding "wheel" of upcoming tasks — each step further back
-                shrinks and tucks behind the one in front of it. Capped at 3:
-                each card overlaps (and is covered by) the previous one via
-                negative margins, so rendering more than 3 would just pile
-                them up on top of each other with no visual payoff. */}
-            {upcomingRoots.slice(0, 3).map((root, i) => {
-              const rootDoneCount = root.subtasks.filter((s) => getTaskProgress(s) >= 1).length;
-              const depth = i + 1;
-              return (
-                <div
-                  key={root.id}
-                  className={`${styles.taskCard} ${styles.peek} ${styles[`peek${depth}`]}`}
-                >
-                  <p className={styles.taskTitle}>{root.title}</p>
-                  {root.subtasks.length > 0 && (
-                    <p className={styles.taskMeta}>
-                      {rootDoneCount} of {root.subtasks.length} steps done
-                    </p>
                   )}
                 </div>
-              );
-            })}
+              </div>
+
+              {/* Inter, not the serif — a step can be a full sentence, and
+                  task text is never set in the display face. */}
+              <h2 className={styles.stepTitle}>{nextTask.title}</h2>
+
+              {rootTask.id !== nextTask.id && (
+                <>
+                  <p className={styles.stepMeta}>
+                    {rootTask.title} · Step {currentIndex + 1} of {siblings.length}
+                  </p>
+                  <div
+                    className={styles.segments}
+                    role="img"
+                    aria-label={`${siblings.filter((s) => getTaskProgress(s) >= 1).length} of ${siblings.length} steps done`}
+                  >
+                    {siblings.map((step) => {
+                      const isCurrent = step.id === nextTask.id;
+                      const isDone = !isCurrent && getTaskProgress(step) >= 1;
+                      return (
+                        <span
+                          key={step.id}
+                          className={`${styles.segment} ${
+                            isCurrent ? styles.segmentCurrent : isDone ? styles.segmentDone : ""
+                          }`}
+                        />
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              <button type="button" className={styles.doneBtn} onClick={handleMarkDone}>
+                <svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true">
+                  <path
+                    d="M3 8.5 L6.5 12 L13 4.5"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Mark as done
+              </button>
+              <div className={styles.secondaryActions}>
+                <button
+                  type="button"
+                  className={styles.secondaryBtn}
+                  onClick={() => handleGenerate(nextTask.id)}
+                  disabled={isGenerating}
+                >
+                  <SparkleIcon size={14} />
+                  {isGenerating ? "Breaking down\u2026" : "Break it down"}
+                </button>
+                <Link href={`/tasks/new?parent=${nextTask.id}`} className={styles.secondaryBtn}>
+                  <PlusIcon size={14} />
+                  Add step
+                </Link>
+              </div>
+            </article>
+
+            {(upcomingSteps.length > 0 || nextRoot) && (
+              <section className={styles.afterCard}>
+                <h3 className={styles.afterHeading}>After this</h3>
+                <ul>
+                  {upcomingSteps.map((step) => (
+                    <li key={step.id} className={styles.afterRow}>
+                      <span className={styles.afterDot} aria-hidden="true" />
+                      <span className={styles.afterText}>{step.title}</span>
+                    </li>
+                  ))}
+                  {nextRoot && (
+                    <li className={`${styles.afterRow} ${styles.afterRowMuted}`}>
+                      <span
+                        className={`${styles.afterDot} ${styles.afterDotTod}`}
+                        data-tod={nextRoot.timeOfDay.toLowerCase()}
+                        aria-hidden="true"
+                      />
+                      <span className={styles.afterText}>Then: {nextRoot.title}</span>
+                    </li>
+                  )}
+                </ul>
+              </section>
+            )}
           </>
         )}
 

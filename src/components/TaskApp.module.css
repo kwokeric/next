@@ -2,110 +2,119 @@
   margin: 0 auto;
   max-width: 42rem;
   width: 100%;
-  /* Extra bottom room so the last row can scroll clear of the floating
+  /* Extra bottom room so the last card can scroll clear of the floating
      BottomNav pill. */
-  padding: 1.5rem 1rem 6rem;
+  padding: 2.5rem 1rem 7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.title {
-  font-family: var(--font-belgiano-serif), serif;
-  font-size: 2.5rem;
-  font-weight: 600;
-  text-align: center;
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 0.25rem 0.375rem 0.5rem;
 }
 
-.subtitle {
-  margin-top: 0.25rem;
+/* Day progress as a ring next to the title — conic-gradient driven by the
+   --progress custom property set inline from TaskApp.tsx. */
+.dayRing {
+  flex-shrink: 0;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: conic-gradient(var(--blue-400) 0 var(--progress), var(--color-border) var(--progress) 100%);
+  display: grid;
+  place-items: center;
+  transition: background 0.3s ease;
+}
+
+.dayRingLabel {
+  width: 2.875rem;
+  height: 2.875rem;
+  border-radius: 50%;
+  background: var(--color-bg);
+  display: grid;
+  place-items: center;
   font-size: 0.8125rem;
-  color: var(--color-muted-fg);
+  font-weight: 600;
 }
 
-.progressTrack {
-  margin-top: 0.5rem;
-  height: 0.375rem;
-  border-radius: 0.1875rem;
-  background: var(--color-border-subtle);
-  overflow: hidden;
-}
-
-.progressFill {
-  height: 100%;
-  background: var(--blue-400);
-  transition: width 0.3s ease;
+/* Each time-of-day bucket is its own white card; its pastel (via
+   data-tod, see globals.css) only tints the small icon badge. */
+.sectionCard {
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 0.375rem 1rem 0.25rem;
 }
 
 .sectionHeaderRow {
-  margin-top: 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding-right: 0.5rem;
+  min-height: 3rem;
 }
 
 .sectionHeaderButton {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 0.375rem;
-  background: var(--color-surface-hover);
+  gap: 0.625rem;
+  background: none;
   border: none;
-  border-radius: 1rem;
-  padding: 0.375rem 0.75rem;
+  padding: 0.25rem 0;
   cursor: pointer;
-  color: var(--color-muted-fg);
-}
-
-.anytime {
-  background: #fcf2dd;
-}
-
-.morning {
-  background: #f1fce7;
-}
-
-.afternoon {
-  background: #edf9fb;
-}
-
-.evening {
-  background: #ebefff;
+  color: var(--color-fg);
+  text-align: left;
 }
 
 .sectionIcon {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.875rem;
-  line-height: 1;
+  flex-shrink: 0;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--tod-bg, var(--color-surface));
+  color: var(--tod-fg, var(--color-muted-fg));
+}
+
+.sectionIconDone {
+  background: var(--color-accent-tint);
+  color: var(--color-accent-ink);
+}
+
+.sectionHeader {
+  font-family: var(--font-belgiano-serif), serif;
+  font-size: 1.375rem;
+  line-height: 1.1;
+}
+
+.sectionCount {
+  font-size: 0.8125rem;
+  color: var(--color-muted-fg);
 }
 
 .sectionChevron {
-  color: var(--color-muted-fg);
+  color: var(--color-muted);
   transition: transform 0.2s ease-in-out;
   flex-shrink: 0;
 }
 
-.sectionHeader {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-muted-fg);
-}
-
 .sectionAddButton {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 1rem;
-  height: 1.5rem;
-  width: 1.5rem;
-  background: var(--color-surface-hover);
-  color: var(--color-muted);
-  font-size: 1.125rem;
-  line-height: 0.5;
-  cursor: pointer;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-muted-fg);
   text-decoration: none;
 }
 
@@ -116,25 +125,5 @@
 }
 
 .taskList {
-  margin-top: 0.75rem;
-}
-
-.addTaskButton {
-  display: inline-flex;
-  align-items: center;
-  margin-top: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  border: none;
-  border-radius: 0.5rem;
-  background: var(--color-surface);
-  color: var(--color-muted-fg);
-  font-size: 0.9375rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.addTaskButton:hover,
-.addTaskButton:active {
-  background: var(--color-surface-hover);
-  color: var(--color-fg);
+  margin-top: 0.125rem;
 }

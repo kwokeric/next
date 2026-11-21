@@ -9,7 +9,7 @@
 }
 
 .track {
-  stroke: var(--color-border-subtle);
+  stroke: var(--color-border);
 }
 
 .progress {

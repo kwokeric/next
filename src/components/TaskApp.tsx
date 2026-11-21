@@ -24,10 +24,10 @@ import styles from "./TaskApp.module.css";
 const COMPLETION_MOVE_DELAY_MS = 500;
 
 const TIME_OF_DAY_SECTIONS: { key: TimeOfDay; label: string; icon: React.ReactNode }[] = [
-  { key: "ANYTIME", label: "Anytime", icon: <ClockIcon size={14} /> },
-  { key: "MORNING", label: "Morning", icon: <SunriseIcon size={14} /> },
-  { key: "AFTERNOON", label: "Afternoon", icon: <SunIcon size={14} /> },
-  { key: "EVENING", label: "Evening", icon: <MoonIcon size={14} /> },
+  { key: "ANYTIME", label: "Anytime", icon: <ClockIcon size={15} /> },
+  { key: "MORNING", label: "Morning", icon: <SunriseIcon size={15} /> },
+  { key: "AFTERNOON", label: "Afternoon", icon: <SunIcon size={15} /> },
+  { key: "EVENING", label: "Evening", icon: <MoonIcon size={15} /> },
 ];
 
 export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
@@ -139,131 +139,132 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
     setTasks((prev) => prev.filter((t) => !idsToRemove.has(t.id)));
   }
 
-  const dayName = new Date().toLocaleDateString(undefined, { weekday: "long" });
+  const today = new Date();
+  const dayName = today.toLocaleDateString(undefined, { weekday: "long" });
+  const dateLabel = today.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const progressPercent = Math.round(projectProgress * 100);
+
+  function renderTaskList(list: TaskNode[]) {
+    return (
+      <ul className={styles.taskList}>
+        {list.map((task) => (
+          <TaskRow
+            key={task.id}
+            task={task}
+            depth={0}
+            onToggleStatus={handleToggleStatus}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        ))}
+      </ul>
+    );
+  }
+
+  function renderChevron(isCollapsed: boolean) {
+    return (
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 16 16"
+        className={styles.sectionChevron}
+        style={{ transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
+        aria-hidden="true"
+      >
+        <path
+          d="M4 6 L8 10 L12 6"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  const completedCollapsed = collapsedSections.has("COMPLETED");
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>{dayName}</h1>
-
-      {tree.length > 0 && (
-        <>
-          <p className={styles.subtitle}>
-            {completedTasks.length} of {tree.length} tasks completed
-          </p>
-          <div className={styles.progressTrack}>
-            <div
-              className={styles.progressFill}
-              style={{ width: `${Math.round(projectProgress * 100)}%` }}
-            />
+      <header className={styles.header}>
+        <div>
+          <p className="page-eyebrow">{dateLabel}</p>
+          <h1 className="page-title">{dayName}</h1>
+        </div>
+        {tree.length > 0 && (
+          <div
+            className={styles.dayRing}
+            style={{ "--progress": `${progressPercent}%` } as React.CSSProperties}
+            role="img"
+            aria-label={`${completedTasks.length} of ${tree.length} tasks completed`}
+          >
+            <span className={styles.dayRingLabel} aria-hidden="true">
+              {completedTasks.length}/{tree.length}
+            </span>
           </div>
-        </>
-      )}
+        )}
+      </header>
 
       {TIME_OF_DAY_SECTIONS.map(({ key, label, icon }) => {
         const tasksInSection = activeOrPendingTasks.filter((task) => task.timeOfDay === key);
         const isCollapsed = collapsedSections.has(key);
         return (
-          <div key={key}>
+          <section key={key} className={styles.sectionCard} data-tod={key.toLowerCase()}>
             <div className={styles.sectionHeaderRow}>
               <button
-                className={`${styles.sectionHeaderButton} ${styles[key.toLowerCase()]}`}
+                className={styles.sectionHeaderButton}
                 onClick={() => toggleSection(key)}
                 aria-expanded={!isCollapsed}
               >
                 <span className={styles.sectionIcon} aria-hidden="true">
                   {icon}
                 </span>
-                <span className={styles.sectionHeader}>
-                  {label} ({tasksInSection.length})
-                </span>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 16 16"
-                  className={styles.sectionChevron}
-                  style={{ transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
-                >
-                  <path
-                    d="M4 6 L8 10 L12 6"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <span className={styles.sectionHeader}>{label}</span>
+                <span className={styles.sectionCount}>{tasksInSection.length}</span>
+                {renderChevron(isCollapsed)}
               </button>
               <Link
                 href={`/tasks/new?timeOfDay=${key}`}
                 className={styles.sectionAddButton}
                 aria-label={`Add task to ${label}`}
               >
-                <PlusIcon size={12} />
+                <PlusIcon size={14} />
               </Link>
             </div>
 
-            {!isCollapsed && (
-              <ul className={styles.taskList}>
-                {tasksInSection.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    depth={0}
-                    onToggleStatus={handleToggleStatus}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </ul>
-            )}
-          </div>
+            {!isCollapsed && tasksInSection.length > 0 && renderTaskList(tasksInSection)}
+          </section>
         );
       })}
 
       {completedTasks.length > 0 && (
-        <>
+        <section className={styles.sectionCard}>
           <div className={styles.sectionHeaderRow}>
             <button
               className={styles.sectionHeaderButton}
               onClick={() => toggleSection("COMPLETED")}
-              aria-expanded={!collapsedSections.has("COMPLETED")}
+              aria-expanded={!completedCollapsed}
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 16 16"
-                className={styles.sectionChevron}
-                style={{
-                  transform: collapsedSections.has("COMPLETED") ? "rotate(-90deg)" : "rotate(0deg)",
-                }}
-              >
-                <path
-                  d="M4 6 L8 10 L12 6"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className={styles.sectionHeader}>Completed ({completedTasks.length})</span>
+              <span className={`${styles.sectionIcon} ${styles.sectionIconDone}`} aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 16 16">
+                  <path
+                    d="M3.5 8.5 L6.5 11.5 L12.5 5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span className={styles.sectionHeader}>Completed</span>
+              <span className={styles.sectionCount}>{completedTasks.length}</span>
+              {renderChevron(completedCollapsed)}
             </button>
           </div>
-          {!collapsedSections.has("COMPLETED") && (
-          <ul className={styles.taskList}>
-            {completedTasks.map((task) => (
-              <TaskRow
-                key={task.id}
-                task={task}
-                depth={0}
-                onToggleStatus={handleToggleStatus}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            ))}
-          </ul>
-          )}
-        </>
+          {!completedCollapsed && renderTaskList(completedTasks)}
+        </section>
       )}
     </div>
   );

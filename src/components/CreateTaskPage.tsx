@@ -22,21 +22,11 @@ type TimeChoice = "" | "anytime" | "morning" | "afternoon" | "evening" | "exact"
 type TimeOfDayChoice = Exclude<TimeChoice, "" | "exact">;
 
 const TIME_OF_DAY_OPTIONS: { value: TimeOfDayChoice; icon: React.ReactNode; label: string }[] = [
-  { value: "anytime", icon: <ClockIcon size={14} />, label: "Anytime" },
-  { value: "morning", icon: <SunriseIcon size={14} />, label: "Morning" },
-  { value: "afternoon", icon: <SunIcon size={14} />, label: "Afternoon" },
-  { value: "evening", icon: <MoonIcon size={14} />, label: "Evening" },
+  { value: "anytime", icon: <ClockIcon size={18} />, label: "Anytime" },
+  { value: "morning", icon: <SunriseIcon size={18} />, label: "Morning" },
+  { value: "afternoon", icon: <SunIcon size={18} />, label: "Afternoon" },
+  { value: "evening", icon: <MoonIcon size={18} />, label: "Evening" },
 ];
-
-// Same per-bucket pastel used for the section chips on the task list page
-// (see TaskApp.module.css's .anytime/.morning/.afternoon/.evening) — kept
-// here too since CSS Modules don't share classes across files.
-const TIME_OF_DAY_COLOR_CLASS: Record<TimeOfDayChoice, string> = {
-  anytime: styles.timeOfDayAnytime,
-  morning: styles.timeOfDayMorning,
-  afternoon: styles.timeOfDayAfternoon,
-  evening: styles.timeOfDayEvening,
-};
 
 const REPEAT_OPTIONS: { value: RepeatFrequency; label: string }[] = [
   { value: "DAILY", label: "Daily" },
@@ -63,7 +53,12 @@ function localDateString(offsetDays: number): string {
   return `${y}-${m}-${day}`;
 }
 
-// Closes an open dropdown on an outside tap or Escape.
+function formatShortDate(value: string): string {
+  const [y, m, d] = value.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+// Closes on an outside tap or Escape.
 function useCloseOnOutside(
   ref: React.RefObject<HTMLElement | null>,
   open: boolean,
@@ -141,8 +136,7 @@ export function CreateTaskPage({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [todOpen, setTodOpen] = useState(false);
-  const todRef = useRef<HTMLDivElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   // Drag-to-reorder subtasks by their handle. subtasksRef mirrors the
@@ -181,8 +175,6 @@ export function CreateTaskPage({
     titleInputRef.current?.select();
   }, []);
 
-  useCloseOnOutside(todRef, todOpen, () => setTodOpen(false));
-
   // Interacting with anything else on the page (changing the date,
   // dragging a subtask, ...) should clear the title's auto-selected text
   // instead of leaving it highlighted — collapsing the selection, not just
@@ -195,17 +187,14 @@ export function CreateTaskPage({
     input.blur();
   });
 
-  // What the time-of-day dropdown should show: an explicit bucket pick, or
-  // (if an exact time is set instead) the bucket that time falls into.
+  // Which time-of-day tile is selected: an explicit bucket pick, or (if an
+  // exact time is set instead) the bucket that time falls into.
   const effectiveTimeOfDay: TimeOfDayChoice | "" =
     timeChoice === "exact"
       ? exactTime
         ? timeOfDayFromExactTime(exactTime)
         : ""
       : timeChoice;
-  const selectedTimeOfDayOption = TIME_OF_DAY_OPTIONS.find(
-    (opt) => opt.value === effectiveTimeOfDay
-  );
 
   function computeScheduledFor(): string | null {
     if (dateChoice === "today") return localDateString(0);
@@ -246,9 +235,22 @@ export function CreateTaskPage({
     setDateChoice(value ? "custom" : "");
   }
 
-  function handleTimeOfDaySelect(value: string) {
+  function handleTimeOfDaySelect(value: TimeOfDayChoice) {
     setExactTime("");
-    setTimeChoice(value ? (value as TimeChoice) : "");
+    // Tapping the already-selected tile clears it.
+    setTimeChoice(effectiveTimeOfDay === value ? "" : value);
+  }
+
+  function openDatePicker() {
+    const input = dateInputRef.current;
+    if (!input) return;
+    try {
+      input.showPicker();
+    } catch {
+      // showPicker() is unsupported in some older browsers; focusing the
+      // input still lets the user type a date.
+      input.focus();
+    }
   }
 
   function handleExactTimeChange(value: string) {
@@ -464,24 +466,22 @@ export function CreateTaskPage({
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        {showBackCaret ? (
+      <header className={styles.header}>
+        {showBackCaret && (
           <button
             type="button"
-            className={styles.headerLink}
+            className={styles.backButton}
             onClick={handleCancel}
             aria-label="Back"
           >
             <BackIcon size={20} />
           </button>
-        ) : (
-          <div />
         )}
-        <span className={styles.headerTitle}>
+        <p className="page-eyebrow">{editingTask ? "Edit" : parentTask ? "Subtask" : "Create"}</p>
+        <h1 className="page-title">
           {editingTask ? "Edit task" : parentTask ? "Add subtask" : "New task"}
-        </span>
-        <div />
-      </div>
+        </h1>
+      </header>
 
       <div className={styles.body}>
         {parentTask && (
@@ -507,8 +507,8 @@ export function CreateTaskPage({
           </Link>
         )}
 
-        <div className={styles.fieldBlock}>
-          <label htmlFor="task-title" className={styles.fieldLabel}>
+        <div className={`${styles.card} ${styles.titleCard}`}>
+          <label htmlFor="task-title" className={styles.visuallyHidden}>
             Task
           </label>
           <input
@@ -521,53 +521,73 @@ export function CreateTaskPage({
           />
         </div>
 
-        <div className={styles.fieldBlock}>
-          <div className={styles.fieldLabel}>Date</div>
-          <div className={styles.pickerBar}>
-            <input
-              type="date"
-              className={`${styles.pickerMain} ${dateChoice === "custom" ? styles.pickerMainFilled : ""}`}
-              value={customDate}
-              onChange={(e) => handleCustomDateChange(e.target.value)}
-              aria-label="Pick a date"
-            />
-            <span className={styles.pickerDivider} aria-hidden="true" />
-            <div className={styles.pickerAccessory}>
+        <div className={styles.card}>
+          <div className={styles.cardRow}>
+            <CalendarIcon />
+            <span className={styles.cardRowLabel}>Date</span>
+            <div className={styles.segmented}>
               <button
                 type="button"
-                className={`${styles.pickerBtn} ${dateChoice === "today" ? styles.pickerBtnActive : ""}`}
+                className={`${styles.segment} ${dateChoice === "today" ? styles.segmentActive : ""}`}
+                aria-pressed={dateChoice === "today"}
                 onClick={() => toggleDateChoice("today")}
               >
                 Today
               </button>
               <button
                 type="button"
-                className={`${styles.pickerBtn} ${dateChoice === "tomorrow" ? styles.pickerBtnActive : ""}`}
+                className={`${styles.segment} ${dateChoice === "tomorrow" ? styles.segmentActive : ""}`}
+                aria-pressed={dateChoice === "tomorrow"}
                 onClick={() => toggleDateChoice("tomorrow")}
               >
                 Tomorrow
               </button>
               <button
                 type="button"
-                className={`${styles.repeatToggle} ${repeatFrequency ? styles.repeatToggleActive : ""}`}
-                onClick={toggleRepeat}
-                aria-pressed={Boolean(repeatFrequency)}
-                aria-label={repeatFrequency ? "Turn off repeat" : "Make this task repeat"}
+                className={`${styles.segment} ${dateChoice === "custom" ? styles.segmentActive : ""}`}
+                aria-pressed={dateChoice === "custom"}
+                onClick={openDatePicker}
               >
-                <RepeatIcon size={15} />
+                {dateChoice === "custom" && customDate ? formatShortDate(customDate) : "Pick…"}
               </button>
+              <input
+                ref={dateInputRef}
+                type="date"
+                className={styles.hiddenPicker}
+                value={customDate}
+                onChange={(e) => handleCustomDateChange(e.target.value)}
+                aria-label="Pick a date"
+                tabIndex={-1}
+              />
             </div>
           </div>
 
+          <div className={styles.cardRow}>
+            <RepeatIcon size={18} />
+            <span className={styles.cardRowLabel} id="repeat-label">
+              Repeat
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={Boolean(repeatFrequency)}
+              aria-labelledby="repeat-label"
+              className={`${styles.switch} ${repeatFrequency ? styles.switchOn : ""}`}
+              onClick={toggleRepeat}
+            >
+              <span className={styles.switchThumb} />
+            </button>
+          </div>
           {repeatFrequency && (
-            <div className={styles.repeatRow}>
+            <div className={styles.repeatOptions}>
               {REPEAT_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
-                  className={`${styles.repeatOption} ${
-                    repeatFrequency === opt.value ? styles.repeatOptionActive : ""
+                  className={`${styles.segment} ${
+                    repeatFrequency === opt.value ? styles.segmentActive : ""
                   }`}
+                  aria-pressed={repeatFrequency === opt.value}
                   onClick={() => setRepeatFrequency(opt.value)}
                 >
                   {opt.label}
@@ -575,93 +595,44 @@ export function CreateTaskPage({
               ))}
             </div>
           )}
-        </div>
 
-        <div className={styles.fieldBlock}>
-          <div className={styles.fieldLabel}>Time</div>
-          <div className={styles.pickerBar}>
-            <input
-              type="time"
-              step={300}
-              className={`${styles.pickerMain} ${timeChoice === "exact" ? styles.pickerMainFilled : ""}`}
-              value={exactTime}
-              onChange={(e) => handleExactTimeChange(e.target.value)}
-              aria-label="Pick an exact time"
-            />
-
-            <span className={styles.pickerDivider} aria-hidden="true" />
-
-            <div className={`${styles.pickerAccessory} ${styles.timeOfDayAccessory}`}>
-              <div className={styles.dropdownWrapper} ref={todRef}>
+          <div className={styles.timeBlock}>
+            <div className={styles.timeHead}>
+              <span className={styles.cardRowLabel}>Time of day</span>
+              <input
+                type="time"
+                step={300}
+                className={`${styles.timeInput} ${timeChoice === "exact" ? styles.timeInputFilled : ""}`}
+                value={exactTime}
+                onChange={(e) => handleExactTimeChange(e.target.value)}
+                aria-label="Pick an exact time"
+              />
+            </div>
+            <div className={styles.todGrid}>
+              {TIME_OF_DAY_OPTIONS.map((opt) => (
                 <button
                   type="button"
-                  className={`${styles.pickerBtn} ${styles.timeOfDayTrigger} ${
-                    effectiveTimeOfDay
-                      ? TIME_OF_DAY_COLOR_CLASS[effectiveTimeOfDay]
-                      : todOpen
-                        ? styles.pickerBtnActive
-                        : ""
+                  key={opt.value}
+                  data-tod={opt.value}
+                  aria-pressed={effectiveTimeOfDay === opt.value}
+                  className={`${styles.todTile} ${
+                    effectiveTimeOfDay === opt.value ? styles.todTileSelected : ""
                   }`}
-                  onClick={() => setTodOpen((v) => !v)}
-                  aria-haspopup="listbox"
-                  aria-expanded={todOpen}
+                  onClick={() => handleTimeOfDaySelect(opt.value)}
                 >
-                  <span className={styles.dropdownLabel}>
-                    {selectedTimeOfDayOption ? (
-                      <>
-                        {selectedTimeOfDayOption.icon}
-                        {selectedTimeOfDayOption.label}
-                      </>
-                    ) : (
-                      "Time of day"
-                    )}
-                  </span>
-                  <svg
-                    className={`${styles.dropdownCaret} ${todOpen ? styles.dropdownCaretOpen : ""}`}
-                    width="10"
-                    height="10"
-                    viewBox="0 0 10 10"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M2 3.5 L5 6.5 L8 3.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  {opt.icon}
+                  {opt.label}
                 </button>
-                {todOpen && (
-                  <div className={styles.dropdownPanel} role="listbox">
-                    {TIME_OF_DAY_OPTIONS.map((opt) => (
-                      <button
-                        type="button"
-                        key={opt.value}
-                        role="option"
-                        aria-selected={effectiveTimeOfDay === opt.value}
-                        className={`${styles.dropdownOption} ${TIME_OF_DAY_COLOR_CLASS[opt.value]} ${
-                          effectiveTimeOfDay === opt.value ? styles.dropdownOptionSelected : ""
-                        }`}
-                        onClick={() => {
-                          handleTimeOfDaySelect(opt.value);
-                          setTodOpen(false);
-                        }}
-                      >
-                        {opt.icon}
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              ))}
             </div>
           </div>
         </div>
 
-        <div className={styles.fieldBlock}>
-          <div className={styles.fieldLabel}>Subtasks ({subtasks.length})</div>
+        <div className={`${styles.card} ${styles.subtaskCard}`}>
+          <div className={styles.subtaskHead}>
+            <h2 className={styles.subtaskTitle}>Subtasks</h2>
+            <span className={styles.subtaskCount}>{subtasks.length}</span>
+          </div>
           {(subtasks.length > 0 || addingSubtask) && (
             <ul className={styles.subtaskList}>
               {subtasks.map((subtask) => (
@@ -748,29 +719,26 @@ export function CreateTaskPage({
           <div className={styles.subtaskActions}>
             <button
               type="button"
-              className={`${styles.chip} ${styles.chipNeutral} ${styles.subtaskBtn}`}
+              className={styles.subtaskBtn}
               disabled={!hasTitle}
               onClick={() => (addingSubtask ? handleAddSubtask() : setAddingSubtask(true))}
             >
-              <PlusIcon size={12} />
+              <PlusIcon size={14} />
               Add subtask
             </button>
             <button
               type="button"
-              className={`${styles.chip} ${styles.subtaskBtn} ${styles.subtaskGenerateBtn}`}
+              className={`${styles.subtaskBtn} ${styles.subtaskGenerateBtn}`}
               disabled={!hasTitle || isGenerating}
               onClick={handleGenerate}
             >
-              <span className={styles.rotatingBorder} aria-hidden="true" />
-              <span className={styles.btnLabel}>
-                {isGenerating ? (
-                  "Generating…"
-                ) : (
-                  <>
-                    <SparkleIcon size={14} className={styles.sparkleIcon} /> Generate
-                  </>
-                )}
-              </span>
+              {isGenerating ? (
+                "Generating…"
+              ) : (
+                <>
+                  <SparkleIcon size={14} /> Generate
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -795,5 +763,23 @@ export function CreateTaskPage({
         </button>
       </div>
     </div>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <rect x="4" y="5" width="16" height="15" rx="2" />
+      <path d="M4 10h16M9 3v4M15 3v4" />
+    </svg>
   );
 }
