@@ -49,6 +49,10 @@ export async function seedDemoTasks(prisma: PrismaClient, projectId: string): Pr
 
   // A few time-of-day examples to show off the schedule grouping.
   await addTask("Morning routine", null, TaskStatus.TODO, TimeOfDay.MORNING);
+  const morningRun = await addTask("Morning run", null, TaskStatus.TODO, TimeOfDay.MORNING);
+  await addTask("Put on workout clothes", morningRun.id, TaskStatus.TODO, TimeOfDay.MORNING);
+  await addTask("Take energy gel", morningRun.id, TaskStatus.TODO, TimeOfDay.MORNING);
+  await addTask("Confirm route", morningRun.id, TaskStatus.TODO, TimeOfDay.MORNING);
   await addTask("Bike to work", null, TaskStatus.TODO, TimeOfDay.MORNING);
   await addTask("Lunch with Sam", null, TaskStatus.TODO, TimeOfDay.AFTERNOON);
   await addTask("Evening walk", null, TaskStatus.TODO, TimeOfDay.EVENING);

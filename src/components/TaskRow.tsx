@@ -29,7 +29,7 @@ export function TaskRow({
   const swipeStartX = useRef<number | null>(null);
   const didSwipeRef = useRef(false);
   const [_taskTitle, setTaskTitle] = useState(task.title);
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [swiped, setSwiped] = useState(false);
 
