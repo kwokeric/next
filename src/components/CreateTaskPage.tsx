@@ -104,11 +104,16 @@ export function CreateTaskPage({
 }) {
   const router = useRouter();
 
-  const initialDateChoice: DateChoice = !initialScheduledFor
+  // A brand-new top-level task defaults to today; editing keeps whatever the
+  // task already has (including no date), and subtasks stay undated.
+  const defaultScheduledFor =
+    initialScheduledFor ?? (!editingTask && !parentTask ? localDateString(0) : null);
+
+  const initialDateChoice: DateChoice = !defaultScheduledFor
     ? ""
-    : initialScheduledFor === localDateString(0)
+    : defaultScheduledFor === localDateString(0)
       ? "today"
-      : initialScheduledFor === localDateString(1)
+      : defaultScheduledFor === localDateString(1)
         ? "tomorrow"
         : "custom";
 
@@ -117,7 +122,7 @@ export function CreateTaskPage({
   // Always seeded from the resolved date, not just for "custom" — so the
   // picker visibly shows today's/tomorrow's actual date when one of those
   // shortcuts is what's selected, instead of sitting blank.
-  const [customDate, setCustomDate] = useState(initialScheduledFor ?? "");
+  const [customDate, setCustomDate] = useState(defaultScheduledFor ?? "");
   const [timeChoice, setTimeChoice] = useState<TimeChoice>(
     initialExactTime ? "exact" : initialTimeOfDay ? (initialTimeOfDay.toLowerCase() as TimeChoice) : ""
   );

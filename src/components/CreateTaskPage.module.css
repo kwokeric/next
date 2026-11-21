@@ -20,7 +20,7 @@
    pages (see .page-eyebrow / .page-title in globals.css). */
 .header {
   flex-shrink: 0;
-  padding: 2.5rem 1.5rem 1.125rem;
+  padding: 2.5rem 1.5rem 0.875rem;
 }
 
 .backButton {
@@ -48,7 +48,9 @@
   /* Extra bottom room so the last card can scroll clear of both the
      floating Create button and the BottomNav pill, which overlay this
      area instead of reserving flex space. */
-  padding: 0 1rem 11rem;
+  /* A little top padding so the title card's focus ring isn't clipped by
+     this scroll container's top edge. */
+  padding: 0.25rem 1rem 11rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
