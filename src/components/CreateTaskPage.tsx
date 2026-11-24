@@ -442,7 +442,9 @@ export function CreateTaskPage({
       if (editingTask) {
         router.back();
       } else {
-        router.push("/");
+        // Land on the day the task was planned for, so it's visible.
+        const day = computeScheduledFor();
+        router.push(day && day !== localDateString(0) ? `/?day=${day}` : "/");
       }
       router.refresh();
     } catch {

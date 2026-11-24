@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import type { Task, TimeOfDay } from "@prisma/client";
 import {
@@ -10,7 +10,9 @@ import {
   type TaskNode,
 } from "@/lib/task-tree";
 import { updateTask, deleteTask } from "@/lib/api-client";
+import { formatDay, tasksForDay, todayKey, TIMEZONE_COOKIE, type DayKey } from "@/lib/day";
 import { TaskRow } from "./TaskRow";
+import { DayPicker } from "./DayPicker";
 import { PlusIcon } from "./icons/PlusIcon";
 import { ClockIcon } from "./icons/ClockIcon";
 import { SunriseIcon } from "./icons/SunriseIcon";
@@ -30,12 +32,56 @@ const TIME_OF_DAY_SECTIONS: { key: TimeOfDay; label: string; icon: React.ReactNo
   { key: "EVENING", label: "Evening", icon: <MoonIcon size={15} /> },
 ];
 
-export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
+function subscribeToDayChange(onChange: () => void) {
+  window.addEventListener("focus", onChange);
+  document.addEventListener("visibilitychange", onChange);
+  return () => {
+    window.removeEventListener("focus", onChange);
+    document.removeEventListener("visibilitychange", onChange);
+  };
+}
+
+export function TaskApp({
+  initialTasks,
+  initialToday,
+  initialDay,
+}: {
+  initialTasks: Task[];
+  // "Today" as the server resolved it from the visitor's tz cookie (UTC
+  // until that cookie exists), so the first render matches on both sides.
+  initialToday: DayKey;
+  // The ?day= being viewed, if any.
+  initialDay: DayKey | null;
+}) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  // The browser's own "today". Hydration uses the server's value, then
+  // React re-renders with the browser's if they differ (first visit before
+  // the tz cookie exists) — no mismatch. Re-checked when the tab regains
+  // focus, so a tab left open overnight moves on to the new day.
+  const today = useSyncExternalStore(subscribeToDayChange, () => todayKey(), () => initialToday);
+  // null = follow today; otherwise the day the user picked.
+  const [pickedDay, setPickedDay] = useState<DayKey | null>(initialDay);
+  const selectedDay = pickedDay ?? today;
+
+  // Remember the browser's timezone so future server renders get "today"
+  // right on the first pass.
+  useEffect(() => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    document.cookie = `${TIMEZONE_COOKIE}=${encodeURIComponent(tz)}; path=/; max-age=31536000; samesite=lax`;
+  }, []);
+
+  function selectDay(day: DayKey) {
+    setPickedDay(day === today ? null : day);
+    // Keep the URL shareable/back-navigable without a server round trip.
+    window.history.replaceState(null, "", day === today ? "/" : `/?day=${day}`);
+  }
 
   const tree = useMemo(() => buildTaskTree(tasks), [tasks]);
-  const projectProgress = useMemo(() => getProjectProgress(tree), [tree]);
+  const dayTasks = useMemo(() => tasksForDay(tree, selectedDay, today), [tree, selectedDay, today]);
+  const projectProgress = useMemo(() => getProjectProgress(dayTasks.tasks), [dayTasks]);
+  const isToday = selectedDay === today;
+  const isPast = selectedDay < today;
 
   // Newly completed tasks stay in their section for a bit to allow time for
   // the completion animation to play. Tasks already complete on the first
@@ -50,12 +96,14 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
   const [pendingCompletionIds, setPendingCompletionIds] = useState<Set<string>>(new Set());
 
   const activeOrPendingTasks = useMemo(
-    () => tree.filter((task) => getTaskProgress(task) < 1 || pendingCompletionIds.has(task.id)),
-    [tree, pendingCompletionIds]
+    () =>
+      dayTasks.tasks.filter((task) => getTaskProgress(task) < 1 || pendingCompletionIds.has(task.id)),
+    [dayTasks, pendingCompletionIds]
   );
   const completedTasks = useMemo(
-    () => tree.filter((task) => getTaskProgress(task) >= 1 && !pendingCompletionIds.has(task.id)),
-    [tree, pendingCompletionIds]
+    () =>
+      dayTasks.tasks.filter((task) => getTaskProgress(task) >= 1 && !pendingCompletionIds.has(task.id)),
+    [dayTasks, pendingCompletionIds]
   );
 
   function toggleSection(key: string) {
@@ -139,9 +187,9 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
     setTasks((prev) => prev.filter((t) => !idsToRemove.has(t.id)));
   }
 
-  const today = new Date();
-  const dayName = today.toLocaleDateString(undefined, { weekday: "long" });
-  const dateLabel = today.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const dayName = formatDay(selectedDay, { weekday: "long" });
+  const dateLabel = `${isToday ? "Today · " : ""}${formatDay(selectedDay, { month: "short", day: "numeric" })}`;
+  const dayTotal = dayTasks.tasks.length;
   const progressPercent = Math.round(projectProgress * 100);
 
   function renderTaskList(list: TaskNode[]) {
@@ -152,6 +200,7 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
             key={task.id}
             task={task}
             depth={0}
+            badge={dayTasks.carriedFrom.get(task.id)}
             onToggleStatus={handleToggleStatus}
             onEdit={handleEdit}
             onDelete={handleDelete}
@@ -192,21 +241,43 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
           <p className="page-eyebrow">{dateLabel}</p>
           <h1 className="page-title">{dayName}</h1>
         </div>
-        {tree.length > 0 && (
-          <div
-            className={styles.dayRing}
-            style={{ "--progress": `${progressPercent}%` } as React.CSSProperties}
-            role="img"
-            aria-label={`${completedTasks.length} of ${tree.length} tasks completed`}
-          >
-            <span className={styles.dayRingLabel} aria-hidden="true">
-              {completedTasks.length}/{tree.length}
-            </span>
-          </div>
-        )}
+        <div className={styles.headerActions}>
+          {!isToday && (
+            <button type="button" className={styles.todayButton} onClick={() => selectDay(today)}>
+              Today
+            </button>
+          )}
+          {dayTotal > 0 && (
+            <div
+              className={styles.dayRing}
+              style={{ "--progress": `${progressPercent}%` } as React.CSSProperties}
+              role="img"
+              aria-label={`${completedTasks.length} of ${dayTotal} tasks completed`}
+            >
+              <span className={styles.dayRingLabel} aria-hidden="true">
+                {completedTasks.length}/{dayTotal}
+              </span>
+            </div>
+          )}
+        </div>
       </header>
 
-      {TIME_OF_DAY_SECTIONS.map(({ key, label, icon }) => {
+      <DayPicker
+        selected={selectedDay}
+        today={today}
+        onSelect={selectDay}
+        hasTasks={(day) => tasksForDay(tree, day, today).tasks.length > 0}
+      />
+
+      {isPast && dayTotal === 0 && (
+        <section className={styles.emptyCard}>
+          <p className={styles.emptyTitle}>All clear</p>
+          <p className={styles.emptyBody}>Anything left undone moved to today.</p>
+        </section>
+      )}
+
+      {/* Past days only show what got done — there's nothing to add to them. */}
+      {!isPast && TIME_OF_DAY_SECTIONS.map(({ key, label, icon }) => {
         const tasksInSection = activeOrPendingTasks.filter((task) => task.timeOfDay === key);
         const isCollapsed = collapsedSections.has(key);
         return (
@@ -225,7 +296,7 @@ export function TaskApp({ initialTasks }: { initialTasks: Task[] }) {
                 {renderChevron(isCollapsed)}
               </button>
               <Link
-                href={`/tasks/new?timeOfDay=${key}`}
+                href={`/tasks/new?timeOfDay=${key}${isToday ? "" : `&date=${selectedDay}`}`}
                 className={styles.sectionAddButton}
                 aria-label={`Add task to ${label}`}
               >

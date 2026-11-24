@@ -150,3 +150,15 @@
 .actionsOpen {
   width: 4rem;
 }
+
+/* e.g. "From Sat" on a task carried over from an earlier day. */
+.badge {
+  flex-shrink: 0;
+  border-radius: var(--radius-pill);
+  padding: 0.1875rem 0.5rem;
+  background: var(--tod-anytime-bg);
+  color: var(--tod-anytime-fg);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}

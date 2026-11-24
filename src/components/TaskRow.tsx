@@ -14,12 +14,15 @@ const SWIPE_THRESHOLD_PX = 80; // 5rem at the default 16px root
 export function TaskRow({
   task,
   depth,
+  badge,
   onToggleStatus,
   onEdit,
   onDelete,
 }: {
   task: TaskNode;
   depth: number;
+  // Small tag after the title, e.g. "From Sat" for a carried-over task.
+  badge?: string;
   onToggleStatus: (task: TaskNode) => void;
   onEdit: (task: TaskNode, title: string) => void;
   onDelete: (task: TaskNode) => void;
@@ -130,6 +133,8 @@ export function TaskRow({
             ref={setInputRef}
           />
         </span>
+
+        {badge && <span className={styles.badge}>{badge}</span>}
 
         {hasSubtasks && (
           <button

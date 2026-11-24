@@ -127,3 +127,48 @@
 .taskList {
   margin-top: 0.125rem;
 }
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+/* Only shown while browsing another day — jumps back to today. */
+.todayButton {
+  height: 2rem;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.todayButton:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.emptyCard {
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 1.75rem 1.25rem;
+  text-align: center;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-family: var(--font-belgiano-serif), serif;
+  font-size: 1.5rem;
+}
+
+.emptyBody {
+  margin: 0.375rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-muted-fg);
+}
