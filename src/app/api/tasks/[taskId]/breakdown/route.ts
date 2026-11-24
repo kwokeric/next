@@ -3,6 +3,8 @@ import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { generateSubtasks } from "@/lib/anthropic";
 import { keyForAppend } from "@/lib/order";
+import { findOwnedTask } from "@/lib/guest";
+import { tasksTag } from "@/lib/tasks-cache";
 
 export async function POST(
   _request: Request,
@@ -10,7 +12,7 @@ export async function POST(
 ) {
   const { taskId } = await params;
 
-  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  const task = await findOwnedTask(taskId);
   if (!task) {
     return NextResponse.json({ error: "task not found" }, { status: 404 });
   }
@@ -41,6 +43,6 @@ export async function POST(
     orderBy: { order: "asc" },
   });
 
-  revalidateTag("tasks", { expire: 0 });
+  revalidateTag(tasksTag(task.projectId), { expire: 0 });
   return NextResponse.json(created, { status: 201 });
 }

@@ -1,4 +1,4 @@
-import { getOrCreateDefaultProject } from "@/lib/project";
+import { getGuestProject } from "@/lib/guest";
 import { getCachedTasks } from "@/lib/tasks-cache";
 import { TaskApp } from "@/components/TaskApp";
 
@@ -8,7 +8,7 @@ import { TaskApp } from "@/components/TaskApp";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const project = await getOrCreateDefaultProject();
+  const project = await getGuestProject();
   const tasks = await getCachedTasks(project.id);
 
   return <TaskApp initialTasks={tasks} />;

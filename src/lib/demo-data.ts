@@ -1,11 +1,15 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { TaskStatus, TimeOfDay } from "@prisma/client";
 import { keyForAppend } from "./order";
 
-// The task tree used both to seed a brand-new project (prisma/seed.ts) and
-// to restore the public demo project to its starting state (see
-// src/app/api/reset/route.ts) — kept in one place so the two can't drift.
-export async function seedDemoTasks(prisma: PrismaClient, projectId: string): Promise<void> {
+// The starter task tree every new guest gets (see getGuestProject in
+// src/lib/guest.ts), also used by prisma/seed.ts. Takes a transaction
+// client so a guest's project is seeded atomically; a plain PrismaClient
+// works too.
+export async function seedDemoTasks(
+  prisma: Prisma.TransactionClient,
+  projectId: string
+): Promise<void> {
   // Tracks the last sibling's order key per parent, so each parent gets its
   // own independent fractional-index sequence.
   const lastOrderByParent = new Map<string | null, string | null>();

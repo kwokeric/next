@@ -3,6 +3,8 @@ import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { TaskStatus, type Task } from "@prisma/client";
 import { nextOccurrence } from "@/lib/recur";
+import { findOwnedTask } from "@/lib/guest";
+import { tasksTag } from "@/lib/tasks-cache";
 
 // Walks up the parent chain, auto-completing (or un-completing) each
 // ancestor based on whether all of its direct children are non-TODO.
@@ -65,6 +67,9 @@ export async function PATCH(
   { params }: { params: Promise<{ taskId: string }> }
 ) {
   const { taskId } = await params;
+  if (!(await findOwnedTask(taskId))) {
+    return NextResponse.json({ error: "task not found" }, { status: 404 });
+  }
   const body = await request.json();
 
   let task = await prisma.task.update({
@@ -116,7 +121,7 @@ export async function PATCH(
     await cascadeParentStatus(task.parentTaskId, changed);
   }
 
-  revalidateTag("tasks", { expire: 0 });
+  revalidateTag(tasksTag(task.projectId), { expire: 0 });
   return NextResponse.json(changed);
 }
 
@@ -125,8 +130,12 @@ export async function DELETE(
   { params }: { params: Promise<{ taskId: string }> }
 ) {
   const { taskId } = await params;
+  const task = await findOwnedTask(taskId);
+  if (!task) {
+    return NextResponse.json({ error: "task not found" }, { status: 404 });
+  }
   // Subtasks cascade-delete via the self-relation's onDelete: Cascade.
   await prisma.task.delete({ where: { id: taskId } });
-  revalidateTag("tasks", { expire: 0 });
+  revalidateTag(tasksTag(task.projectId), { expire: 0 });
   return new NextResponse(null, { status: 204 });
 }

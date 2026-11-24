@@ -1,4 +1,4 @@
-name: Reset demo data
+name: Prune inactive guests
 
 # Vercel's Hobby plan only allows cron jobs to run once a day, so this runs
 # from Actions instead — it's independent of hosting plan and can hit an
@@ -9,7 +9,7 @@ name: Reset demo data
 
 on:
   schedule:
-    - cron: "0 */4 * * *"
+    - cron: "0 9 * * *"
   workflow_dispatch: {}
 
 jobs:

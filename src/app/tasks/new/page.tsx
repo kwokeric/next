@@ -1,5 +1,4 @@
-import { prisma } from "@/lib/prisma";
-import { getOrCreateDefaultProject } from "@/lib/project";
+import { findOwnedTask, getGuestProject } from "@/lib/guest";
 import { CreateTaskPage } from "@/components/CreateTaskPage";
 import type { TimeOfDay } from "@prisma/client";
 
@@ -14,11 +13,9 @@ export default async function NewTaskPage({
   searchParams: Promise<{ parent?: string; timeOfDay?: string }>;
 }) {
   const { parent, timeOfDay } = await searchParams;
-  const project = await getOrCreateDefaultProject();
+  const project = await getGuestProject();
 
-  const parentTask = parent
-    ? await prisma.task.findUnique({ where: { id: parent } })
-    : null;
+  const parentTask = parent ? await findOwnedTask(parent) : null;
 
   const initialTimeOfDay = TIME_OF_DAY_VALUES.includes(timeOfDay as TimeOfDay)
     ? (timeOfDay as TimeOfDay)

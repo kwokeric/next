@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { findOwnedTask } from "@/lib/guest";
 import { CreateTaskPage } from "@/components/CreateTaskPage";
 
 // Always personalized, DB-backed content — never prerender statically.
@@ -30,7 +31,7 @@ export default async function EditTaskPage({
 }) {
   const { taskId } = await params;
 
-  const task = await prisma.task.findUnique({ where: { id: taskId } });
+  const task = await findOwnedTask(taskId);
   if (!task) notFound();
 
   const subtasks = await prisma.task.findMany({

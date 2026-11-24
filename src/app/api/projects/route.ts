@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { DEMO_USER_ID } from "@/lib/demo-user";
+import { getGuestId, getGuestProject } from "@/lib/guest";
 
 export async function GET() {
   const projects = await prisma.project.findMany({
-    where: { userId: DEMO_USER_ID, archived: false },
+    where: { userId: await getGuestId(), archived: false },
     orderBy: { createdAt: "asc" },
   });
   return NextResponse.json(projects);
@@ -17,11 +17,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "title is required" }, { status: 400 });
   }
 
+  // Makes sure the guest's User row exists before attaching a project.
+  await getGuestProject();
+
   const project = await prisma.project.create({
     data: {
       title,
       color: typeof body.color === "string" ? body.color : null,
-      userId: DEMO_USER_ID,
+      userId: await getGuestId(),
     },
   });
 
